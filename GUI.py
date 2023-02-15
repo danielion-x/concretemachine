@@ -14,10 +14,10 @@ file_opener = [
 sand_inputs = [
     #[sg.Image('flickr logo.png'), ],
     [sg.Text('Specimen Name '), sg.Input()],
-    [sg.Text('Sand % '), sg.Input()],
-    [sg.Text('Aggregate % '), sg.Input()],
-    [sg.Text('Cement % '), sg.Input()],
-    [sg.Text('Water % '), sg.Input()],
+    [sg.Text('Sand (lbs)'), sg.Input()],
+    [sg.Text('Aggregate (lbs) '), sg.Input()],
+    [sg.Text('Cement (lbs) '), sg.Input()],
+    [sg.Text('Water (lbs) '), sg.Input()],
     [sg.OK(), sg.Cancel()]
           ]
 
