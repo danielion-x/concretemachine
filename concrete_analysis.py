@@ -35,11 +35,4 @@ def concreteAnalysis(filename, spec_name, rad=2):
     plt.savefig('%s plot.png' % spec_name, dpi=500)
 
 
-concreteAnalysis("001 Mix1 KingBob.xlsx", 'Bob - Mix1')
-concreteAnalysis("000 Mix1 Chrys.xlsx", 'Chrys - Mix1')
-concreteAnalysis('002 Mix2 Benito.xlsx', 'Benito - Mix2')
-concreteAnalysis('003 Mix2 Malo.xlsx', 'Malo - Mix2')
-concreteAnalysis('004 Mix3 Chiffon.xlsx', 'Chiffon - Mix3')
-concreteAnalysis('005 Mix3 LilSteela.xlsx', 'LilSteela - Mix3')
-concreteAnalysis('006 Mix4 Girl.xlsx', 'Girl - Mix4')
-concreteAnalysis('007 Mix4 Boy.xlsx', 'Boy - Mix4')
+
