@@ -1,5 +1,4 @@
 import PySimpleGUI as sg
-import os.path
 
 sg.theme('LightGrey') #sets theme of window
 sg.set_options(font=('Arial Bold', 16))
@@ -33,10 +32,18 @@ while True:
     event, values = window.read()
     if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
         break
-    sand = values[1]
-    aggregate = values[2]
-    cement = values[3]
-    water = values[4]
+    sand_lbs = values[1]
+    aggregate_lbs = values[2]
+    cement_lbs = values[3]
+    water_lbs = values[4]
+
+    total_weight = values[1]+values[2]+values[3]+values[4]
+
+    sand_pcnt = sand_lbs/total_weight
+    aggregate_pcnt = aggregate_lbs/total_weight
+    cement_pcnt = cement_lbs/total_weight
+    water_pcnt = water_lbs/total_weight
+
     print('You entered ', values[0])
 
 
