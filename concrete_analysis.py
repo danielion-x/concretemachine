@@ -10,8 +10,8 @@ def concreteAnalysis(filename, spec_name, rad=2):
     a scatter plot, a rolling average, and a linear regression line. Also produces key metrics
     such as Young's Modulus and Ultimate Strength '''
     area = (rad ** 2) * np.pi
-    concrete_df = pd.read_excel(filename)
-    concrete_dff = concrete_df[(concrete_df['kips'] >= 0) & (concrete_df['inch'] >= 0)]
+    concrete_df = pd.read_csv(filename) #opens excel file
+    concrete_dff = concrete_df[(concrete_df['kips'] >= 1) & (concrete_df['inch'] >= 0)] #new df with all > 0 kips and inch values
     row_max = concrete_dff['kips'].idxmax()
 
     concrete_dff['corrected disp'] = concrete_dff['inch'] - concrete_dff.iloc[0]['inch']
@@ -19,7 +19,7 @@ def concreteAnalysis(filename, spec_name, rad=2):
     concrete_dff['stress'] = ((concrete_dff['kips'] * 1000) / area).truncate(after=row_max)
     val_max = concrete_dff['stress'].max()
     concrete_dff['rolling'] = concrete_dff['stress'].rolling(50).mean()
-    reg_line = linregress(concrete_dff['strain'].head(10000), concrete_dff['stress'].head(10000))
+    reg_line = linregress(concrete_dff['strain'].head(5000), concrete_dff['stress'].head(5000))
     print(spec_name + " Ultimate Strength: %f. Young's Modulus: %f" % (val_max, reg_line.slope))
 
     plt.figure(dpi=300)
@@ -34,5 +34,6 @@ def concreteAnalysis(filename, spec_name, rad=2):
     plt.legend()
     plt.savefig('%s plot.png' % spec_name, dpi=500)
 
-
+concreteAnalysis('conc_mix_test.csv', 'Conc Test', 2)
+concreteAnalysis('cob_mix_test.csv', 'Cob Test', 3)
 
