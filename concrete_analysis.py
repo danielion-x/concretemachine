@@ -18,6 +18,7 @@ def concreteAnalysis(filename, spec_name, rad=2):
     concrete_dff['strain'] = (concrete_dff['corrected disp'] / rad).truncate(after=row_max)
     concrete_dff['stress'] = ((concrete_dff['kips'] * 1000) / area).truncate(after=row_max)
     val_max = concrete_dff['stress'].max()
+    rounded_val_max = val_max.round(3)
     concrete_dff['rolling'] = concrete_dff['stress'].rolling(50).mean()
     reg_line = linregress(concrete_dff['strain'].head(5000), concrete_dff['stress'].head(5000))
     print(spec_name + " Ultimate Strength: %f. Young's Modulus: %f" % (val_max, reg_line.slope))
@@ -27,7 +28,7 @@ def concreteAnalysis(filename, spec_name, rad=2):
     plt.plot(concrete_dff['strain'], reg_line.intercept + reg_line.slope * concrete_dff['strain'],
              label='Regression Line = %fx + %f with R^2 %f' % (reg_line.slope, reg_line.intercept, reg_line.rvalue))
     plt.plot(concrete_dff['strain'], concrete_dff['rolling'], label='Rolling Average')
-    plt.title('Stress vs. Strain of %s' % spec_name)
+    plt.title('Stress vs. Strain of %s with Ultimate Strength %f' % (spec_name, rounded_val_max))
     plt.xlabel('Stress (in/in)')
     plt.ylabel('Strain (psi)')
     plt.ylim(0, val_max)
