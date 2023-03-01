@@ -5,7 +5,6 @@ from scipy.stats import linregress
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
-
 class test_specimen:
     def __init__(self,file_name, specimen_name, radius):
         self.file_name = file_name
