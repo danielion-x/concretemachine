@@ -1,7 +1,9 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import linregress
+import PySimpleGUI as sg
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -19,7 +21,7 @@ class test_specimen:
         a scatter plot, a rolling average, and a linear regression line. Also produces key metrics
         such as Young's Modulus and Ultimate Strength '''
         area = (self.radius ** 2) * np.pi
-        concrete_df = pd.read_csv(self.file_name) #opens excel file
+        concrete_df = pd.read_csv(self.file_name) #opens CSV file
         concrete_dff = concrete_df[(concrete_df['kips'] >= 1) & (concrete_df['inch'] >= 0)] #new df with all > 0 kips and inch values
         row_max = concrete_dff['kips'].idxmax()
 
@@ -46,11 +48,56 @@ class test_specimen:
         plt.legend()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
-Concrete =test_specimen('conc_mix_test.csv', 'Conc Test', 2)
-Cob =test_specimen('cob_mix_test.csv', 'Cob Test', 3)
 
-Concrete.concreteAnalysis()
-Cob.concreteAnalysis()
+sg.theme('LightGrey') #sets theme of window
+sg.set_options(font=('Arial Bold', 16))
+
+sand_inputs = [
+    #[sg.Image('flickr logo.png'), ],
+    [sg.Text('Specimen Name '), sg.Input()],
+    [sg.Text('Sand (lbs)'), sg.Input()],
+    [sg.Text('Aggregate (lbs) '), sg.Input()],
+    [sg.Text('Cement (lbs) '), sg.Input()],
+    [sg.Text('Water (lbs) '), sg.Input()],
+    [sg.OK(), sg.Cancel()]
+          ]
+
+layout = [
+    [sg.Column(sand_inputs),]
+    ]
+
+window = sg.Window('Concrete Machine', layout) #creates a window based on the layout above with title and size
+#shown
+while True:
+    event, values = window.read()
+    filename = sg.popup_get_file('filename to open', no_window=True, file_types=(("CSV Files", "*.csv"),))
+    if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+        break
+
+    mix_name = values[0]
+    sand_lbs = float(values[1])
+    aggregate_lbs = float(values[2])
+    cement_lbs = float(values[3])
+    water_lbs = float(values[4])
+
+    total_weight = sand_lbs + aggregate_lbs + cement_lbs + water_lbs
+
+    sand_pcnt = sand_lbs/total_weight
+    aggregate_pcnt = aggregate_lbs/total_weight
+    cement_pcnt = cement_lbs/total_weight
+    water_pcnt = water_lbs/total_weight
+
+    print('You entered ', mix_name)
+    print('Your mix has a total weight of ', total_weight)
+    print(filename)
+
+    mix_name = test_specimen(filename, mix_name, 3)
+    mix_name.concreteAnalysis()
+
+
+
+window.close()
+
 
 
 
