@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 pd.options.mode.chained_assignment = None  # default='warn'
 
 class test_specimen:
-    def __init__(self,file_name, specimen_name, radius):
+    def __init__(self,file_name, specimen_name, radius, sandpcnt, aggpcnt, waterpcnt, cementpcnt):
         self.file_name = file_name
         self.specimen_name = specimen_name
         self.radius = radius
@@ -91,7 +91,7 @@ while True:
     print('Your mix has a total weight of ', total_weight)
     print(filename)
 
-    mix_name = test_specimen(filename, mix_name, 3)
+    mix_name = test_specimen(filename, mix_name, 3, sand_pcnt, aggregate_pcnt, cement_pcnt, water_pcnt)
     mix_name.concreteAnalysis()
 
 
