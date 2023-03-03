@@ -15,6 +15,10 @@ class test_specimen:
         self.ultimate_strength = 0
         self.youngs_modulus = 0
         self.data_table = 0
+        self.sand_percent = sandpcnt
+        self.aggregate_percent = aggpcnt
+        self.water_percent = waterpcnt
+        self.cement_percent = cementpcnt
 
     def concreteAnalysis(self):
         ''' Takes an Excel file of inches vs kips and produces a graphical representation including
