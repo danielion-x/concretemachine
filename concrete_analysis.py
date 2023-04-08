@@ -66,31 +66,20 @@ setting_choices = [
 
 specimen_names = [
     #[sg.Image('flickr logo.png'), ],
-    [sg.Text('Specimen Name ')],
-    [sg.Text('Fine Aggregate (lbs)')],
-    [sg.Text('Course Aggregate (lbs)')],
-    [sg.Text('Cement (lbs) ')],
-    [sg.Text('Water (lbs) ')],
-    [sg.Text('Specimen Radius (in) ')],
-    [sg.Text('Curing Time (days)')],
+    [sg.Text('Specimen Name   ', justification='left'), sg.Input()],
+    [sg.Text('Fine Aggregate  ', justification='left'), sg.Input()],
+    [sg.Text('Course Aggregate', justification='left'), sg.Input()],
+    [sg.Text('Cement          ', justification='left'), sg.Input()],
+    [sg.Text('Water           ', justification='left'), sg.Input()],
+    [sg.Text('Specimen Radius ', justification='left'), sg.Input()],
+    [sg.Text('Curing Time     ', justification='left'), sg.Input()],
     [sg.OK(), sg.Cancel()]
           ]
 
-value_inputs = [
-    [sg.Input()],
-    [sg.Input()],
-    [sg.Input()],
-    [sg.Input()],
-    [sg.Input()],
-    [sg.Input()],
-    [sg.Input()],
-    [sg.Text('')],
-    [sg.Text('')],
-]
 
 layout = [
     [sg.Column(setting_names), sg.Column(setting_choices)],
-    [sg.Column(specimen_names), sg.Column(value_inputs)],
+    [sg.Column(specimen_names)]
     ]
 
 window = sg.Window('Concrete Machine', layout) #creates a window based on the layout above with title and size
