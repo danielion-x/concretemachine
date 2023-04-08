@@ -16,7 +16,7 @@ class test_specimen:
         self.youngs_modulus = 0
         self.data_table = 0
         self.fine_aggregate = fineaggpcnt
-        self.coarse_aggregate_percent = courseaggpcnt
+        self.coarse_aggregate_percent = coarseaggpcnt
         self.water_percent = waterpcnt
         self.cement_percent = cementpcnt
         self.blast_furnace_slag = blast_fer_slg
