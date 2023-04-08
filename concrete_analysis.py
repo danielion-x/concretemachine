@@ -52,18 +52,41 @@ class test_specimen:
 sg.theme('LightGrey') #sets theme of window
 sg.set_options(font=('Arial Bold', 16))
 
-sand_inputs = [
+setting_names = [
+    [sg.Text('Units ')],
+]
+
+setting_choices = [
+    [sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=True)],
+]
+
+specimen_names = [
     #[sg.Image('flickr logo.png'), ],
-    [sg.Text('Specimen Name '), sg.Input()],
-    [sg.Text('Sand (lbs)'), sg.Input()],
-    [sg.Text('Aggregate (lbs) '), sg.Input()],
-    [sg.Text('Cement (lbs) '), sg.Input()],
-    [sg.Text('Water (lbs) '), sg.Input()],
+    [sg.Text('Specimen Name ')],
+    [sg.Text('Fine Aggregate (lbs)')],
+    [sg.Text('Course Aggregate (lbs)')],
+    [sg.Text('Cement (lbs) ')],
+    [sg.Text('Water (lbs) ')],
+    [sg.Text('Specimen Radius (in) ')],
+    [sg.Text('Curing Time (days)')],
     [sg.OK(), sg.Cancel()]
           ]
 
+value_inputs = [
+    [sg.Input()],
+    [sg.Input()],
+    [sg.Input()],
+    [sg.Input()],
+    [sg.Input()],
+    [sg.Input()],
+    [sg.Input()],
+    [sg.Text('')],
+    [sg.Text('')],
+]
+
 layout = [
-    [sg.Column(sand_inputs),]
+    [sg.Column(setting_names), sg.Column(setting_choices)],
+    [sg.Column(specimen_names), sg.Column(value_inputs)],
     ]
 
 window = sg.Window('Concrete Machine', layout) #creates a window based on the layout above with title and size
@@ -71,19 +94,22 @@ window = sg.Window('Concrete Machine', layout) #creates a window based on the la
 while True:
     event, values = window.read()
     filename = sg.popup_get_file('filename to open', no_window=True, file_types=(("CSV Files", "*.csv"),))
+
     if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
         break
 
     mix_name = values[0]
-    sand_lbs = float(values[1])
-    aggregate_lbs = float(values[2])
+    fineagg_lbs = float(values[1])
+    courseagg_lbs = float(values[2])
     cement_lbs = float(values[3])
     water_lbs = float(values[4])
+    radius = float(values[5])
+    curing_time =  float(values[6])
 
-    total_weight = sand_lbs + aggregate_lbs + cement_lbs + water_lbs
+    total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
 
-    sand_pcnt = sand_lbs/total_weight
-    aggregate_pcnt = aggregate_lbs/total_weight
+    fineagg_pcnt = fineagg_lbs/total_weight
+    courseagg_pcnt = courseagg_lbs/total_weight
     cement_pcnt = cement_lbs/total_weight
     water_pcnt = water_lbs/total_weight
 
@@ -91,12 +117,12 @@ while True:
     print('Your mix has a total weight of ', total_weight)
     print(filename)
 
-    mix_name = test_specimen(filename, mix_name, 3, sand_pcnt, aggregate_pcnt, cement_pcnt, water_pcnt)
+    mix_name = test_specimen(filename, mix_name, radius, fineagg_pcnt, courseagg_pcnt, cement_pcnt, water_pcnt)
     mix_name.concreteAnalysis()
 
 
-
-window.close()
+    
+    window.close()
 
 
 
