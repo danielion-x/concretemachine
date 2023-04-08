@@ -8,17 +8,22 @@ import PySimpleGUI as sg
 pd.options.mode.chained_assignment = None  # default='warn'
 
 class test_specimen:
-    def __init__(self,file_name, specimen_name, radius, sandpcnt, aggpcnt, waterpcnt, cementpcnt):
+    def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age):
         self.file_name = file_name
         self.specimen_name = specimen_name
         self.radius = radius
         self.ultimate_strength = 0
         self.youngs_modulus = 0
         self.data_table = 0
-        self.sand_percent = sandpcnt
-        self.aggregate_percent = aggpcnt
+        self.fine_aggregate = fineaggpcnt
+        self.coarse_aggregate_percent = courseaggpcnt
         self.water_percent = waterpcnt
         self.cement_percent = cementpcnt
+        self.blast_furnace_slag = blast_fer_slg
+        self.fly_ash = flyash
+        self.super_plastisizer = superplast
+        self.age = age
+        self.predictive_data_table = 0
 
     def concreteAnalysis(self):
         ''' Takes an Excel file of inches vs kips and produces a graphical representation including
@@ -43,7 +48,7 @@ class test_specimen:
         plt.figure(dpi=300)
         plt.plot(concrete_dff['strain'], concrete_dff['stress'], label='Structural Analysis of %s' % self.specimen_name)
         plt.plot(concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * concrete_dff['strain'],
-             label='Regression Line = %fx + %f with R^2 %f' % (self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
+        label='Regression Line = %fx + %f with R^2 %f' % (self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
         plt.plot(concrete_dff['strain'], concrete_dff['rolling'], label='Rolling Average')
         plt.title('Stress vs. Strain of %s with Ultimate Strength %f' % (self.specimen_name, self.ultimate_strength))
         plt.xlabel('Strain (in/in)')
@@ -51,6 +56,14 @@ class test_specimen:
         plt.ylim(0, self.ultimate_strength)
         plt.legend()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
+
+        def predictiveAnalysis(self):
+            analysis_data = {'Cement': [self.cement_percent], 'Blast Furnace Slag': [self.blast_furnace_slag],
+                             'Fly Ash': [self.fly_ash], 'Water': [self.water_percent],
+                             'Superplasticizer': [self.super_plastisizer], 'Coarse Aggregate': [self.aggregate_percent],
+                             'Fine Aggregate': [self.sand_percent], 'Age': [self.age]}
+            predictive_df = pd.DataFrame(data=analysis_data)
+            self.predictive_data_table = predictive_df
 
 
 sg.theme('LightGrey') #sets theme of window
