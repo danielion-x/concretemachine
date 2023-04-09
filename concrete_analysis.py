@@ -15,13 +15,13 @@ class test_specimen:
         self.ultimate_strength = 0
         self.youngs_modulus = 0
         self.data_table = 0
-        self.fine_aggregate = fineaggpcnt
-        self.coarse_aggregate_percent = coarseaggpcnt
-        self.water_percent = waterpcnt
-        self.cement_percent = cementpcnt
-        self.blast_furnace_slag = blast_fer_slg
-        self.fly_ash = flyash
-        self.super_plastisizer = superplast
+        self.fine_aggregate = fineaggpcnt * 0.453592
+        self.coarse_aggregate_percent = coarseaggpcnt * 0.453592
+        self.water_percent = waterpcnt * 0.453592
+        self.cement_percent = cementpcnt * 0.453592
+        self.blast_furnace_slag = blast_fer_slg * 0.453592
+        self.fly_ash = flyash * 0.453592
+        self.super_plastisizer = superplast * 0.453592
         self.age = age
         self.predictive_data_table = 0
 
@@ -30,7 +30,7 @@ class test_specimen:
         a scatter plot, a rolling average, and a linear regression line. Also produces key metrics
         such as Young's Modulus and Ultimate Strength '''
         area = (self.radius ** 2) * np.pi
-        concrete_df = pd.read_csv(self.file_name) #opens CSV file
+        concrete_df = pd.read_excel(self.file_name) #opens CSV file
         concrete_dff = concrete_df[(concrete_df['kips'] >= 1) & (concrete_df['inch'] >= 0)] #new df with all > 0 kips and inch values
         row_max = concrete_dff['kips'].idxmax()
 
@@ -38,7 +38,6 @@ class test_specimen:
         concrete_dff['strain'] = (concrete_dff['corrected disp'] / self.radius).truncate(after=row_max)
         concrete_dff['stress'] = ((concrete_dff['kips'] * 1000) / area).truncate(after=row_max)
         self.ultimate_strength = concrete_dff['stress'].max()
-        rounded_val_max = self.ultimate_strength.round(3)
         concrete_dff['rolling'] = concrete_dff['stress'].rolling(50).mean()
         reg_line = linregress(concrete_dff['strain'].head(5000), concrete_dff['stress'].head(5000))
         self.youngs_modulus = reg_line.slope
@@ -61,7 +60,7 @@ class test_specimen:
             analysis_data = {'Cement': [self.cement_percent], 'Blast Furnace Slag': [self.blast_furnace_slag],
                              'Fly Ash': [self.fly_ash], 'Water': [self.water_percent],
                              'Superplasticizer': [self.super_plastisizer], 'Coarse Aggregate': [self.aggregate_percent],
-                             'Fine Aggregate': [self.sand_percent], 'Age': [self.age]}
+                             'Fine Aggregate': [self.sand_percent], 'Age': [self.age], 'Concrete compressive strength': [self.ultimate_stength]}
             predictive_df = pd.DataFrame(data=analysis_data)
             self.predictive_data_table = predictive_df
 
