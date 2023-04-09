@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 from scipy.stats import linregress
 import PySimpleGUI as sg
@@ -8,10 +9,10 @@ import PySimpleGUI as sg
 pd.options.mode.chained_assignment = None  # default='warn'
 
 class test_specimen:
-    def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age):
+    def __init__(self, file_name, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age):
         self.file_name = file_name
         self.specimen_name = specimen_name
-        self.radius = radius
+        self.radius = 2
         self.ultimate_strength = 0
         self.youngs_modulus = 0
         self.data_table = 0
@@ -37,6 +38,7 @@ class test_specimen:
         concrete_dff['corrected disp'] = concrete_dff['inch'] - concrete_dff.iloc[0]['inch']
         concrete_dff['strain'] = (concrete_dff['corrected disp'] / self.radius).truncate(after=row_max)
         concrete_dff['stress'] = ((concrete_dff['kips'] * 1000) / area).truncate(after=row_max)
+        print('Max is %f' %concrete_dff['stress'].max())
         self.ultimate_strength = concrete_dff['stress'].max()
         concrete_dff['rolling'] = concrete_dff['stress'].rolling(50).mean()
         reg_line = linregress(concrete_dff['strain'].head(5000), concrete_dff['stress'].head(5000))
@@ -65,68 +67,80 @@ class test_specimen:
             self.predictive_data_table = predictive_df
 
 
-sg.theme('LightGrey') #sets theme of window
+#sg.theme('LightGrey') #sets theme of window
 sg.set_options(font=('Arial Bold', 16))
 
-setting_names = [
-    [sg.Text('Units ')],
-]
 
 setting_choices = [
-    [sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=True)],
+    #[sg.Text('File Name'), sg.Input(enable_events=True, key='-IN-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Text('Current Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=True)],
 ]
 
 specimen_names = [
     #[sg.Image('flickr logo.png'), ],
-    [sg.Text('Specimen Name   ', justification='left'), sg.Input()],
-    [sg.Text('Fine Aggregate  ', justification='left'), sg.Input()],
-    [sg.Text('Course Aggregate', justification='left'), sg.Input()],
-    [sg.Text('Cement          ', justification='left'), sg.Input()],
-    [sg.Text('Water           ', justification='left'), sg.Input()],
-    [sg.Text('Specimen Radius ', justification='left'), sg.Input()],
-    [sg.Text('Curing Time     ', justification='left'), sg.Input()],
-    [sg.OK(), sg.Cancel()]
+    [sg.Text('Specimen Name     ', justification='left'), sg.Input()],
+    [sg.Text('Fine Aggregate    ', justification='left'), sg.Input()],
+    [sg.Text('Course Aggregate  ', justification='left'), sg.Input()],
+    [sg.Text('Cement            ', justification='left'), sg.Input()],
+    [sg.Text('Water             ', justification='left'), sg.Input()],
+    [sg.Text('Fly Ash           ', justification='left'), sg.Input()],
+    [sg.Text('Super Plasticizer ', justification='left'), sg.Input()],
+    [sg.Text('Blast Furnace Slag', justification='left'), sg.Input()],
+    [sg.Text('Age               ', justification='left'), sg.Input()],
+    [sg.Text('Specimen Radius   ', justification='left'), sg.Input()],
+    [sg.Text('Curing Time       ', justification='left'), sg.Input()],
+    [sg.Text('File Name'), sg.Input(enable_events=True, key='-IN-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
           ]
 
+choices = [
+    [sg.OK(), sg.Cancel()],
+]
 
 layout = [
-    [sg.Column(setting_names), sg.Column(setting_choices)],
-    [sg.Column(specimen_names)]
+    [sg.Column(setting_choices)],
+    [sg.Column(specimen_names)],
+    [sg.Column(choices)],
     ]
 
 window = sg.Window('Concrete Machine', layout) #creates a window based on the layout above with title and size
 #shown
 while True:
     event, values = window.read()
-    filename = sg.popup_get_file('filename to open', no_window=True, file_types=(("CSV Files", "*.csv"),))
+    #file = sg.popup_get_file('Select a file',  title="File selector")
 
     if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
         break
 
-    mix_name = values[0]
-    fineagg_lbs = float(values[1])
-    courseagg_lbs = float(values[2])
-    cement_lbs = float(values[3])
-    water_lbs = float(values[4])
-    radius = float(values[5])
-    curing_time =  float(values[6])
+    specimen_name = values[0]
+    fineagg_lbs = int((values[1]))
+    courseagg_lbs = int((values[2]))
+    cement_lbs = int((values[3]))
+    water_lbs = int((values[4]))
+    flyash_lbs = int((values[5]))
+    superplasticizer_lbs = int((values[6]))
+    blast_fer_slg_lbs = int((values[7]))
+    radius = int(values[8])
+    age = int((values[9]))
+    filename = values['-IN-']
 
-    total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
+    total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs + flyash_lbs + superplasticizer_lbs
 
-    fineagg_pcnt = fineagg_lbs/total_weight
-    courseagg_pcnt = courseagg_lbs/total_weight
-    cement_pcnt = cement_lbs/total_weight
-    water_pcnt = water_lbs/total_weight
+    fineaggpcnt = fineagg_lbs/total_weight
+    coarseaggpcnt = courseagg_lbs/total_weight
+    cementpcnt = cement_lbs/total_weight
+    waterpcnt = water_lbs/total_weight
+    blast_fer_slg = blast_fer_slg_lbs/total_weight
+    flyash = flyash_lbs/total_weight
+    superplast = superplasticizer_lbs/total_weight
 
-    print('You entered ', mix_name)
+
+    print('You entered ', specimen_name)
     print('Your mix has a total weight of ', total_weight)
-    print(filename)
 
-    mix_name = test_specimen(filename, mix_name, radius, fineagg_pcnt, courseagg_pcnt, cement_pcnt, water_pcnt)
-    mix_name.concreteAnalysis()
+    mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash,
+                             superplast, age)
+    mix_name_data = mix_name.concreteAnalysis()
 
-
-    
     window.close()
 
 
