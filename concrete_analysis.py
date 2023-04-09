@@ -46,7 +46,7 @@ class test_specimen:
         print(self.specimen_name + " Ultimate Strength: %f. Young's Modulus: %f" % (self.ultimate_strength, self.youngs_modulus))
         self.data_table = concrete_dff
 
-        plt.figure(dpi=300)
+        fig = plt.figure()
         plt.plot(concrete_dff['strain'], concrete_dff['stress'], label='Structural Analysis of %s' % self.specimen_name)
         plt.plot(concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * concrete_dff['strain'],
         label='Regression Line = %fx + %f with R^2 %f' % (self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
@@ -56,7 +56,10 @@ class test_specimen:
         plt.ylabel('Stress (psi)')
         plt.ylim(0, self.ultimate_strength)
         plt.legend()
+        plt.show()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
+
+        #draw_figure(_VARS['window']['figCanvas'].TKCanvas, fig)
 
         def predictiveAnalysis(self):
             analysis_data = {'Cement': [self.cement_percent], 'Blast Furnace Slag': [self.blast_furnace_slag],
@@ -73,27 +76,27 @@ sg.set_options(font=('Arial Bold', 16))
 
 setting_choices = [
     #[sg.Text('File Name'), sg.Input(enable_events=True, key='-IN-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Text('Current Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=True)],
+    [sg.Text('Current Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=False)],
 ]
 
 specimen_names = [
     #[sg.Image('flickr logo.png'), ],
     [sg.Text('Specimen Name     ', justification='left'), sg.Input()],
-    [sg.Text('Fine Aggregate    ', justification='left'), sg.Input()],
+    [sg.Text('Fine Aggregate       ', justification='left'), sg.Input()],
     [sg.Text('Course Aggregate  ', justification='left'), sg.Input()],
-    [sg.Text('Cement            ', justification='left'), sg.Input()],
-    [sg.Text('Water             ', justification='left'), sg.Input()],
-    [sg.Text('Fly Ash           ', justification='left'), sg.Input()],
-    [sg.Text('Super Plasticizer ', justification='left'), sg.Input()],
-    [sg.Text('Blast Furnace Slag', justification='left'), sg.Input()],
-    [sg.Text('Age               ', justification='left'), sg.Input()],
-    [sg.Text('Specimen Radius   ', justification='left'), sg.Input()],
-    [sg.Text('Curing Time       ', justification='left'), sg.Input()],
-    [sg.Text('File Name'), sg.Input(enable_events=True, key='-IN-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Text('Cement                    ', justification='left'), sg.Input()],
+    [sg.Text('Water                       ', justification='left'), sg.Input()],
+    [sg.Text('Fly Ash                    ', justification='left'), sg.Input(default_text='0')],
+    [sg.Text('Super Plasticizer    ', justification='left'), sg.Input(default_text='0')],
+    [sg.Text('Blast Furnace Slag ', justification='left'), sg.Input(default_text='0')],
+    [sg.Text('Age                          ', justification='left'), sg.Input(default_text='0')],
+    [sg.Text('Specimen Radius   ', justification='left'), sg.Input(default_text='2')],
+    [sg.Text('Curing Time            ', justification='left'), sg.Input(default_text='28')],
+    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
           ]
 
 choices = [
-    [sg.OK(), sg.Cancel()],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
 ]
 
 layout = [
@@ -104,12 +107,9 @@ layout = [
 
 window = sg.Window('Concrete Machine', layout) #creates a window based on the layout above with title and size
 #shown
+
 while True:
     event, values = window.read()
-    #file = sg.popup_get_file('Select a file',  title="File selector")
-
-    if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
-        break
 
     specimen_name = values[0]
     fineagg_lbs = int((values[1]))
@@ -121,9 +121,9 @@ while True:
     blast_fer_slg_lbs = int((values[7]))
     radius = int(values[8])
     age = int((values[9]))
-    filename = values['-IN-']
+    filename = values['_FILEBROWSE_']
 
-    total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs + flyash_lbs + superplasticizer_lbs
+    total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
 
     fineaggpcnt = fineagg_lbs/total_weight
     coarseaggpcnt = courseagg_lbs/total_weight
@@ -133,15 +133,17 @@ while True:
     flyash = flyash_lbs/total_weight
     superplast = superplasticizer_lbs/total_weight
 
+    if event == sg.WIN_CLOSED: # if user closes window or clicks cancel
+        break
 
-    print('You entered ', specimen_name)
-    print('Your mix has a total weight of ', total_weight)
-
-    mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash,
-                             superplast, age)
-    mix_name_data = mix_name.concreteAnalysis()
+    elif event == '-OK-':
+        mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age)
+        mix_name_data = mix_name.concreteAnalysis()
 
     window.close()
+
+print('You entered ', specimen_name)
+print('Your mix has a total weight of ', total_weight)
 
 
 
