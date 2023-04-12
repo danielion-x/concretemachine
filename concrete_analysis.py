@@ -32,7 +32,7 @@ class test_specimen:
         such as Young's Modulus and Ultimate Strength '''
         area = (self.radius ** 2) * np.pi
         concrete_df = pd.read_excel(self.file_name) #opens CSV file
-        concrete_dff = concrete_df[(concrete_df['kips'] >= 1) & (concrete_df['inch'] >= 0)] #new df with all > 0 kips and inch values
+        concrete_dff = concrete_df[(concrete_df['kips'] >= 0.1) & (concrete_df['inch'] >= 0)] #new df with all > 0 kips and inch values
         row_max = concrete_dff['kips'].idxmax()
 
         concrete_dff['corrected disp'] = concrete_dff['inch'] - concrete_dff.iloc[0]['inch']
@@ -79,7 +79,8 @@ material_choices = ['Concrete', 'Cob', 'Other']
 setting_choices = [
     #[sg.Text('File Name'), sg.Input(enable_events=True, key='-IN-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Text('Current Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=False)],
-    [sg.Combo(material_choices, expand_x=True), sg.Button('Confirm', key='-CONFIRM-')]
+    [sg.Text('Desired Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=False)],
+    [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')]
 ]
 
 
@@ -123,44 +124,44 @@ layout = [
 
 
 
-window = sg.Window('Concrete Machine', layout) #creates a window based on the layout above with title and size
+window = sg.Window('Concrete Machine', layout, finalize=False) #creates a window based on the layout above with title and size
 #shown
 
 while True:
     event, values = window.read()
-    specimen_name = values['Specimen Name']
-    fineagg_lbs = int((values['Fine Agg']))
-    courseagg_lbs = int((values['Course Agg']))
-    cement_lbs = int((values['Cement']))
-    water_lbs = int((values['Water']))
-    flyash_lbs = int((values['Fly Ash']))
-    superplasticizer_lbs = int((values['Super']))
-    blast_fer_slg_lbs = int((values['Blast Slag']))
-    radius = int(values['Rad'])
-    age = int((values['Age']))
-    filename = values['_FILEBROWSE_']
 
-    total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
+    if event == '-OK-':
+        specimen_name = values['Specimen Name']
+        fineagg_lbs = int((values['Fine Agg']))
+        courseagg_lbs = int((values['Course Agg']))
+        cement_lbs = int((values['Cement']))
+        water_lbs = int((values['Water']))
+        flyash_lbs = int((values['Fly Ash']))
+        superplasticizer_lbs = int((values['Super']))
+        blast_fer_slg_lbs = int((values['Blast Slag']))
+        radius = int(values['Rad'])
+        age = int((values['Age']))
+        filename = values['_FILEBROWSE_']
 
-    fineaggpcnt = fineagg_lbs/total_weight
-    coarseaggpcnt = courseagg_lbs/total_weight
-    cementpcnt = cement_lbs/total_weight
-    waterpcnt = water_lbs/total_weight
-    blast_fer_slg = blast_fer_slg_lbs/total_weight
-    flyash = flyash_lbs/total_weight
-    superplast = superplasticizer_lbs/total_weight
+        total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
 
-    if event == sg.WIN_CLOSED: # if user closes window or clicks cancel
-        break
+        fineaggpcnt = fineagg_lbs/total_weight
+        coarseaggpcnt = courseagg_lbs/total_weight
+        cementpcnt = cement_lbs/total_weight
+        waterpcnt = water_lbs/total_weight
+        blast_fer_slg = blast_fer_slg_lbs/total_weight
+        flyash = flyash_lbs/total_weight
+        superplast = superplasticizer_lbs/total_weight
 
-    elif event == '-OK-':
         mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age)
         mix_name_data = mix_name.concreteAnalysis()
 
     elif event == '-CONFIRM-':
         if values['-COMBO-'] == 'Cob':
             specimen_type = specimen_type_cob
-            window.refresh()
+
+    elif event == sg.WIN_CLOSED: # if user closes window or clicks cancel
+        break
 
     window.close()
 
