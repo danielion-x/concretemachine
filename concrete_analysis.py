@@ -83,19 +83,18 @@ setting_choices = [
 ]
 
 
-specimen_names_concrete = [
+specimen_type_concrete = [
     #[sg.Image('flickr logo.png'), ],
-    [sg.Text('Specimen Name     ', justification='left'), sg.Input()],
-    [sg.Text('Fine Aggregate       ', justification='left'), sg.Input()],
-    [sg.Text('Course Aggregate  ', justification='left'), sg.Input()],
-    [sg.Text('Cement                    ', justification='left'), sg.Input()],
-    [sg.Text('Water                       ', justification='left'), sg.Input()],
-    [sg.Text('Fly Ash                    ', justification='left'), sg.Input(default_text='0')],
-    [sg.Text('Super Plasticizer    ', justification='left'), sg.Input(default_text='0')],
-    [sg.Text('Blast Furnace Slag ', justification='left'), sg.Input(default_text='0')],
-    [sg.Text('Age                          ', justification='left'), sg.Input(default_text='0')],
-    [sg.Text('Specimen Radius   ', justification='left'), sg.Input(default_text='2')],
-    [sg.Text('Curing Time            ', justification='left'), sg.Input(default_text='28')],
+    [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
+    [sg.Text('Fine Aggregate       ', justification='left'), sg.Input(key='Fine Agg')],
+    [sg.Text('Course Aggregate  ', justification='left'), sg.Input(key='Course Agg')],
+    [sg.Text('Cement                    ', justification='left'), sg.Input(key='Cement')],
+    [sg.Text('Water                       ', justification='left'), sg.Input(key='Water')],
+    [sg.Text('Fly Ash                    ', justification='left'), sg.Input(default_text='0', key='Fly Ash')],
+    [sg.Text('Super Plasticizer    ', justification='left'), sg.Input(default_text='0', key='Super')],
+    [sg.Text('Blast Furnace Slag ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
+    [sg.Text('Specimen Radius   ', justification='left'), sg.Input(default_text='2', key='Rad')],
+    [sg.Text('Curing Time            ', justification='left'), sg.Input(default_text='28', key='Age')],
     [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
           ]
 
@@ -103,22 +102,22 @@ choices = [
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
 ]
 
-specimen_names_cob = [
+specimen_type_cob = [
     [sg.Text('Dirt   ')]
 ]
 
 image_header = [
-    [sg.Image(filename='mame logo.png', expand_x='true')],
+    [sg.Image(filename='mame logo.png', expand_x=True)],
 
 ]
 
-specimen_names = specimen_names_concrete
+specimen_type = specimen_type_concrete
 
 
 layout = [
     [image_header],
     [setting_choices],
-    [specimen_names],
+    [specimen_type],
     [choices],
     ]
 
@@ -129,17 +128,16 @@ window = sg.Window('Concrete Machine', layout) #creates a window based on the la
 
 while True:
     event, values = window.read()
-
-    specimen_name = values[0]
-    fineagg_lbs = int((values[1]))
-    courseagg_lbs = int((values[2]))
-    cement_lbs = int((values[3]))
-    water_lbs = int((values[4]))
-    flyash_lbs = int((values[5]))
-    superplasticizer_lbs = int((values[6]))
-    blast_fer_slg_lbs = int((values[7]))
-    radius = int(values[8])
-    age = int((values[9]))
+    specimen_name = values['Specimen Name']
+    fineagg_lbs = int((values['Fine Agg']))
+    courseagg_lbs = int((values['Course Agg']))
+    cement_lbs = int((values['Cement']))
+    water_lbs = int((values['Water']))
+    flyash_lbs = int((values['Fly Ash']))
+    superplasticizer_lbs = int((values['Super']))
+    blast_fer_slg_lbs = int((values['Blast Slag']))
+    radius = int(values['Rad'])
+    age = int((values['Age']))
     filename = values['_FILEBROWSE_']
 
     total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
@@ -160,15 +158,12 @@ while True:
         mix_name_data = mix_name.concreteAnalysis()
 
     elif event == '-CONFIRM-':
-        if material_choices['-COMBO-'] == 'Cob':
-            window.update(visible=False)
-            specimen_name = specimen_names_cob
-            window.update(visible=True)
+        if values['-COMBO-'] == 'Cob':
+            specimen_type = specimen_type_cob
+            window.refresh()
 
     window.close()
 
-print('You entered ', specimen_name)
-print('Your mix has a total weight of ', total_weight)
 
 
 
