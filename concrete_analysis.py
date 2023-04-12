@@ -73,13 +73,17 @@ class test_specimen:
 #sg.theme('LightGrey') #sets theme of window
 sg.set_options(font=('Arial Bold', 16))
 
+material_choices = ['Concrete', 'Cob', 'Other']
+
 
 setting_choices = [
     #[sg.Text('File Name'), sg.Input(enable_events=True, key='-IN-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Text('Current Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=False)],
+    [sg.Combo(material_choices, expand_x=True), sg.Button('Confirm', key='-CONFIRM-')]
 ]
 
-specimen_names = [
+
+specimen_names_concrete = [
     #[sg.Image('flickr logo.png'), ],
     [sg.Text('Specimen Name     ', justification='left'), sg.Input()],
     [sg.Text('Fine Aggregate       ', justification='left'), sg.Input()],
@@ -99,11 +103,26 @@ choices = [
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
 ]
 
+specimen_names_cob = [
+    [sg.Text('Dirt   ')]
+]
+
+image_header = [
+    [sg.Image(filename='mame logo.png', expand_x='true')],
+
+]
+
+specimen_names = specimen_names_concrete
+
+
 layout = [
-    [sg.Column(setting_choices)],
-    [sg.Column(specimen_names)],
-    [sg.Column(choices)],
+    [image_header],
+    [setting_choices],
+    [specimen_names],
+    [choices],
     ]
+
+
 
 window = sg.Window('Concrete Machine', layout) #creates a window based on the layout above with title and size
 #shown
@@ -139,6 +158,12 @@ while True:
     elif event == '-OK-':
         mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age)
         mix_name_data = mix_name.concreteAnalysis()
+
+    elif event == '-CONFIRM-':
+        if material_choices['-COMBO-'] == 'Cob':
+            window.update(visible=False)
+            specimen_name = specimen_names_cob
+            window.update(visible=True)
 
     window.close()
 
