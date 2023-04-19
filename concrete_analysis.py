@@ -31,7 +31,13 @@ class test_specimen:
         a scatter plot, a rolling average, and a linear regression line. Also produces key metrics
         such as Young's Modulus and Ultimate Strength '''
         area = (self.radius ** 2) * np.pi
+
         concrete_df = pd.read_excel(self.file_name) #opens CSV file
+
+        if 'inches' in concrete_df:
+            concrete_df['inch'] = concrete_df['inches']
+
+
         concrete_dff = concrete_df[(concrete_df['kips'] >= 0.1) & (concrete_df['inch'] >= 0)] #new df with all > 0 kips and inch values
         row_max = concrete_dff['kips'].idxmax()
 
@@ -85,7 +91,6 @@ setting_choices = [
 
 
 specimen_type_concrete = [
-    #[sg.Image('flickr logo.png'), ],
     [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
     [sg.Text('Fine Aggregate       ', justification='left'), sg.Input(key='Fine Agg')],
     [sg.Text('Course Aggregate  ', justification='left'), sg.Input(key='Course Agg')],
@@ -96,7 +101,6 @@ specimen_type_concrete = [
     [sg.Text('Blast Furnace Slag ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
     [sg.Text('Specimen Radius   ', justification='left'), sg.Input(default_text='2', key='Rad')],
     [sg.Text('Curing Time            ', justification='left'), sg.Input(default_text='28', key='Age')],
-    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
           ]
 
 choices = [
@@ -104,33 +108,45 @@ choices = [
 ]
 
 specimen_type_cob = [
-    [sg.Text('Dirt   ')]
+    [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')],
+    [sg.Text('Soil   '), sg.Input(expand_x=True, key='Dirt')],
+    [sg.Text('Sand   '), sg.Input(expand_x=True, key='Sand')],
+    [sg.Text('Water  '), sg.Input(expand_x=True, key='Water')],
+    [sg.Text('Straw  '), sg.Input(expand_x=True, key='Straw')],
 ]
 
-image_header = [
-    [sg.Image(filename='mame logo.png', expand_x=True)],
-
-]
 
 specimen_type = specimen_type_concrete
 
 
-layout = [
-    [image_header],
+concrete_layout = [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
     [setting_choices],
-    [specimen_type],
-    [choices],
+    [specimen_type_concrete],
+    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+    ]
+
+cob_layout = [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
+    [specimen_type_cob],
+    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
 
-
-window = sg.Window('Concrete Machine', layout, finalize=False) #creates a window based on the layout above with title and size
+window = sg.Window('Concrete Machine', concrete_layout, finalize=False) #creates a window based on the layout above with title and size
 #shown
 
 while True:
     event, values = window.read()
 
-    if event == '-OK-':
+    if event == '-CONFIRM-':
+        if values['-COMBO-'] == 'Cob':
+            window.close()
+            window = sg.Window('Cob Machine', cob_layout)
+
+    elif event == '-OK-':
         specimen_name = values['Specimen Name']
         fineagg_lbs = int((values['Fine Agg']))
         courseagg_lbs = int((values['Course Agg']))
@@ -156,17 +172,9 @@ while True:
         mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age)
         mix_name_data = mix_name.concreteAnalysis()
 
-    elif event == '-CONFIRM-':
-        if values['-COMBO-'] == 'Cob':
-            specimen_type = specimen_type_cob
 
     elif event == sg.WIN_CLOSED: # if user closes window or clicks cancel
         break
-
-    window.close()
-
-
-
 
 
 
