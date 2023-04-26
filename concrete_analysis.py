@@ -9,69 +9,69 @@ import PySimpleGUI as sg
 pd.options.mode.chained_assignment = None  # default='warn'
 
 class test_specimen:
-    class test_specimen:
-        def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt,
-                     blast_fer_slg, flyash, superplast, age, kips_column, inch_column):
-            self.file_name = file_name
-            self.specimen_name = specimen_name
-            self.radius = radius
-            self.ultimate_strength = 0
-            self.youngs_modulus = 0
-            self.data_table = 0
-            self.fine_aggregate = fineaggpcnt * 0.453592
-            self.coarse_aggregate_percent = coarseaggpcnt * 0.453592
-            self.water_percent = waterpcnt * 0.453592
-            self.cement_percent = cementpcnt * 0.453592
-            self.blast_furnace_slag = blast_fer_slg * 0.453592
-            self.fly_ash = flyash * 0.453592
-            self.super_plastisizer = superplast * 0.453592
-            self.age = age
-            self.predictive_data_table = 0
-            self.kips_column = kips_column
-            self.inch_column = inch_column
+    def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt,
+                blast_fer_slg, flyash, superplast, age, kips_column, inch_column):
+        self.file_name = file_name
+        self.specimen_name = specimen_name
+        self.radius = radius
+        self.ultimate_strength = 0
+        self.youngs_modulus = 0
+        self.data_table = 0
+        self.fine_aggregate = fineaggpcnt * 0.453592
+        self.coarse_aggregate_percent = coarseaggpcnt * 0.453592
+        self.water_percent = waterpcnt * 0.453592
+        self.cement_percent = cementpcnt * 0.453592
+        self.blast_furnace_slag = blast_fer_slg * 0.453592
+        self.fly_ash = flyash * 0.453592
+        self.super_plastisizer = superplast * 0.453592
+        self.age = age
+        self.predictive_data_table = 0
+        self.kips_column = kips_column-1
+        self.inch_column = inch_column-1
 
-        def concreteAnalysis(self):
-            ''' Takes an Excel file of inches vs kips and produces a graphical representation including
+    def concreteAnalysis(self):
+        ''' Takes an Excel file of inches vs kips and produces a graphical representation including
             a scatter plot, a rolling average, and a linear regression line. Also produces key metrics
             such as Young's Modulus and Ultimate Strength '''
-            area = (self.radius ** 2) * np.pi
-            concrete_df = pd.read_excel(self.file_name)  # opens CSV file
-            concrete_df.rename(columns={concrete_df.columns[self.inch_column]: 'inch'}, inplace=True)
-            concrete_df.rename(columns={concrete_df.columns[self.kips_column]: 'kips'}, inplace=True)
-            concrete_dft = concrete_df[['kips', 'inch']]
-            concrete_dftt = concrete_dft.drop([0, 1])
-            concrete_dftt['kips'] = pd.to_numeric(concrete_dftt['kips'])
-            concrete_dftt['inch'] = pd.to_numeric(concrete_dftt['inch'])
+        area = (self.radius ** 2) * np.pi
+        concrete_df = pd.read_excel(self.file_name)  # opens CSV file
+        concrete_df.rename(columns={concrete_df.columns[self.inch_column]: 'inch'}, inplace=True)
+        concrete_df.rename(columns={concrete_df.columns[self.kips_column]: 'kips'}, inplace=True)
+        concrete_dft = concrete_df[['kips', 'inch']]
+        concrete_dftt = concrete_dft.drop([0, 1])
+        concrete_dftt['kips'] = pd.to_numeric(concrete_dftt['kips'])
+        concrete_dftt['inch'] = pd.to_numeric(concrete_dftt['inch'])
 
-            concrete_dff = concrete_dftt[
-                (concrete_dftt['kips'] >= 1) & (concrete_dftt['inch'] >= 0)]  # new df with all > 0 kips and inch values
-            row_max = concrete_dff['kips'].idxmax()
+        concrete_dff = concrete_dftt[
+            (concrete_dftt['kips'] >= 1) & (concrete_dftt['inch'] >= 0)]  # new df with all > 0 kips and inch values
+        row_max = concrete_dff['kips'].idxmax()
 
-            concrete_dff['corrected disp'] = concrete_dff['inch'] - concrete_dff.iloc[0]['inch']
-            concrete_dff['strain'] = (concrete_dff['corrected disp'] / self.radius).truncate(after=row_max)
-            concrete_dff['stress'] = ((concrete_dff['kips'] * 1000) / area).truncate(after=row_max)
-            self.ultimate_strength = concrete_dff['stress'].max()
-            concrete_dff['rolling'] = concrete_dff['stress'].rolling(50).mean()
-            reg_line = linregress(concrete_dff['strain'].head(5000), concrete_dff['stress'].head(5000))
-            self.youngs_modulus = reg_line.slope
-            print(self.specimen_name + " Ultimate Strength: %f. Young's Modulus: %f" % (
-            self.ultimate_strength, self.youngs_modulus))
-            self.data_table = concrete_dff
+        concrete_dff['corrected disp'] = concrete_dff['inch'] - concrete_dff.iloc[0]['inch']
+        concrete_dff['strain'] = (concrete_dff['corrected disp'] / self.radius).truncate(after=row_max)
+        concrete_dff['stress'] = ((concrete_dff['kips'] * 1000) / area).truncate(after=row_max)
+        self.ultimate_strength = concrete_dff['stress'].max()
+        concrete_dff['rolling'] = concrete_dff['stress'].rolling(50).mean()
+        reg_line = linregress(concrete_dff['strain'].head(5000), concrete_dff['stress'].head(5000))
+        self.youngs_modulus = reg_line.slope
+        print(self.specimen_name + " Ultimate Strength: %f. Young's Modulus: %f" % (
+        self.ultimate_strength, self.youngs_modulus))
+        self.data_table = concrete_dff
 
-            plt.figure(dpi=300)
-            plt.plot(concrete_dff['strain'], concrete_dff['stress'],
+        plt.figure(dpi=300)
+        plt.plot(concrete_dff['strain'], concrete_dff['stress'],
                      label='Structural Analysis of %s' % self.specimen_name)
-            plt.plot(concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * concrete_dff['strain'],
+        plt.plot(concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * concrete_dff['strain'],
                      label='Regression Line = %fx + %f with R^2 %f' % (
                      self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
-            plt.plot(concrete_dff['strain'], concrete_dff['rolling'], label='Rolling Average')
-            plt.title(
+        plt.plot(concrete_dff['strain'], concrete_dff['rolling'], label='Rolling Average')
+        plt.title(
                 'Stress vs. Strain of %s with Ultimate Strength %f' % (self.specimen_name, self.ultimate_strength))
-            plt.xlabel('Strain (in/in)')
-            plt.ylabel('Stress (psi)')
-            plt.ylim(0, self.ultimate_strength)
-            plt.legend()
-            plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
+        plt.xlabel('Strain (in/in)')
+        plt.ylabel('Stress (psi)')
+        plt.ylim(0, self.ultimate_strength)
+        plt.legend()
+        plt.show()
+        plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
         #draw_figure(_VARS['window']['figCanvas'].TKCanvas, fig)
 
@@ -99,6 +99,7 @@ setting_choices = [
 
 
 specimen_type_concrete = [
+    #[sg.Text('Kips Column #'), sg.Input(key='-KIPS COLUMN-'), sg.Text('Inch Column #'), sg.Input(key='-INCH COLUMN-')],
     [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
     [sg.Text('Fine Aggregate       ', justification='left'), sg.Input(key='Fine Agg')],
     [sg.Text('Course Aggregate  ', justification='left'), sg.Input(key='Course Agg')],
@@ -133,6 +134,8 @@ concrete_layout = [
     [setting_choices],
     [specimen_type_concrete],
     [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Text('Kips Column #        '), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
+    [sg.Text('Inch Column #         '), sg.Input(key='-INCH COLUMN-', expand_x=True)],
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
@@ -141,22 +144,27 @@ cob_layout = [
     [specimen_type_cob],
     [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
+    [sg.Text('Kips Column #             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
+    [sg.Text('Inch Column #             '), sg.Input(key='-INCH COLUMN-', expand_x=False)],
     ]
 
 
-window = sg.Window('Concrete Machine', concrete_layout, finalize=False) #creates a window based on the layout above with title and size
+window = sg.Window('Concrete Machine', layout=concrete_layout, finalize=False) #creates a window based on the layout above with title and size
 #shown
 
 while True:
     event, values = window.read()
 
+    current_layout = concrete_layout
+
     if event == '-CONFIRM-':
         if values['-COMBO-'] == 'Cob':
             window.close()
+            current_layout = cob_layout
             window = sg.Window('Cob Machine', cob_layout)
 
     elif event == '-OK-':
-        if window.layout == concrete_layout:
+        if current_layout == concrete_layout:
             specimen_name = values['Specimen Name']
             fineagg_lbs = int((values['Fine Agg']))
             courseagg_lbs = int((values['Course Agg']))
@@ -168,6 +176,8 @@ while True:
             radius = int(values['Rad'])
             age = int((values['Age']))
             filename = values['_FILEBROWSE_']
+            kips_col = int((values['-KIPS COLUMN-']))
+            inch_col = int((values['-INCH COLUMN-']))
 
             total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
 
@@ -179,7 +189,9 @@ while True:
             flyash = flyash_lbs/total_weight
             superplast = superplasticizer_lbs/total_weight
 
-            mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age)
+            mix_name = test_specimen(filename, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age,
+                                    kips_col, inch_col)
+
             mix_name_data = mix_name.concreteAnalysis()
 
 
