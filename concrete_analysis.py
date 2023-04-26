@@ -99,7 +99,6 @@ setting_choices = [
 
 
 specimen_type_concrete = [
-    #[sg.Image('flickr logo.png'), ],
     [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
     [sg.Text('Fine Aggregate       ', justification='left'), sg.Input(key='Fine Agg')],
     [sg.Text('Course Aggregate  ', justification='left'), sg.Input(key='Course Agg')],
@@ -110,7 +109,6 @@ specimen_type_concrete = [
     [sg.Text('Blast Furnace Slag ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
     [sg.Text('Specimen Radius   ', justification='left'), sg.Input(default_text='2', key='Rad')],
     [sg.Text('Curing Time            ', justification='left'), sg.Input(default_text='28', key='Age')],
-    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
           ]
 
 choices = [
@@ -118,67 +116,76 @@ choices = [
 ]
 
 specimen_type_cob = [
-    [sg.Text('Dirt   ')]
+    [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')],
+    [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
+    [sg.Text('Soil   '), sg.Input(expand_x=True, key='Dirt')],
+    [sg.Text('Sand   '), sg.Input(expand_x=True, key='Sand')],
+    [sg.Text('Water  '), sg.Input(expand_x=True, key='Water')],
+    [sg.Text('Straw  '), sg.Input(expand_x=True, key='Straw')],
 ]
 
-image_header = [
-    [sg.Image(filename='mame logo.png', expand_x=True)],
-
-]
 
 specimen_type = specimen_type_concrete
 
 
-layout = [
-    [image_header],
+concrete_layout = [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
     [setting_choices],
-    [specimen_type],
-    [choices],
+    [specimen_type_concrete],
+    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+    ]
+
+cob_layout = [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
+    [specimen_type_cob],
+    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
 
-
-window = sg.Window('Concrete Machine', layout, finalize=False) #creates a window based on the layout above with title and size
+window = sg.Window('Concrete Machine', concrete_layout, finalize=False) #creates a window based on the layout above with title and size
 #shown
 
 while True:
     event, values = window.read()
 
-    if event == '-OK-':
-        specimen_name = values['Specimen Name']
-        fineagg_lbs = int((values['Fine Agg']))
-        courseagg_lbs = int((values['Course Agg']))
-        cement_lbs = int((values['Cement']))
-        water_lbs = int((values['Water']))
-        flyash_lbs = int((values['Fly Ash']))
-        superplasticizer_lbs = int((values['Super']))
-        blast_fer_slg_lbs = int((values['Blast Slag']))
-        radius = int(values['Rad'])
-        age = int((values['Age']))
-        filename = values['_FILEBROWSE_']
-
-        total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
-
-        fineaggpcnt = fineagg_lbs/total_weight
-        coarseaggpcnt = courseagg_lbs/total_weight
-        cementpcnt = cement_lbs/total_weight
-        waterpcnt = water_lbs/total_weight
-        blast_fer_slg = blast_fer_slg_lbs/total_weight
-        flyash = flyash_lbs/total_weight
-        superplast = superplasticizer_lbs/total_weight
-
-        mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age)
-        mix_name_data = mix_name.concreteAnalysis()
-
-    elif event == '-CONFIRM-':
+    if event == '-CONFIRM-':
         if values['-COMBO-'] == 'Cob':
-            specimen_type = specimen_type_cob
+            window.close()
+            window = sg.Window('Cob Machine', cob_layout)
+
+    elif event == '-OK-':
+        if window.layout == concrete_layout:
+            specimen_name = values['Specimen Name']
+            fineagg_lbs = int((values['Fine Agg']))
+            courseagg_lbs = int((values['Course Agg']))
+            cement_lbs = int((values['Cement']))
+            water_lbs = int((values['Water']))
+            flyash_lbs = int((values['Fly Ash']))
+            superplasticizer_lbs = int((values['Super']))
+            blast_fer_slg_lbs = int((values['Blast Slag']))
+            radius = int(values['Rad'])
+            age = int((values['Age']))
+            filename = values['_FILEBROWSE_']
+
+            total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
+
+            fineaggpcnt = fineagg_lbs/total_weight
+            coarseaggpcnt = courseagg_lbs/total_weight
+            cementpcnt = cement_lbs/total_weight
+            waterpcnt = water_lbs/total_weight
+            blast_fer_slg = blast_fer_slg_lbs/total_weight
+            flyash = flyash_lbs/total_weight
+            superplast = superplasticizer_lbs/total_weight
+
+            mix_name = test_specimen(filename, specimen_name, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age)
+            mix_name_data = mix_name.concreteAnalysis()
+
+
 
     elif event == sg.WIN_CLOSED: # if user closes window or clicks cancel
         break
-
-    window.close()
-
 
 
 
