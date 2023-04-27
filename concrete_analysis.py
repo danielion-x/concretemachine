@@ -1,14 +1,12 @@
 import numpy as np
-import os
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 from scipy.stats import linregress
 import PySimpleGUI as sg
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
-class test_specimen:
+class concrete_specimen:
     def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt,
                 blast_fer_slg, flyash, superplast, age, kips_column, inch_column):
         self.file_name = file_name
@@ -275,7 +273,7 @@ while True:
                     flyash = 0
                     superplast = 0
 
-                mix_name = test_specimen(filename, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age,
+                mix_name = concrete_specimen(filename, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age,
                                     kips_col, inch_col)
 
                 mix_name_data = mix_name.concreteAnalysis()
@@ -319,9 +317,3 @@ while True:
 
     elif event == sg.WIN_CLOSED: # if user closes window or clicks cancel
         break
-
-
-
-
-
-
