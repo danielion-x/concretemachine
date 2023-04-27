@@ -43,7 +43,7 @@ class test_specimen:
         concrete_dftt['inch'] = pd.to_numeric(concrete_dftt['inch'])
 
         concrete_dff = concrete_dftt[
-            (concrete_dftt['kips'] >= 1) & (concrete_dftt['inch'] >= 0)]  # new df with all > 0 kips and inch values
+            (concrete_dftt['kips'] >= 0.5) & (concrete_dftt['inch'] >= 0)]  # new df with all > 0 kips and inch values
         row_max = concrete_dff['kips'].idxmax()
 
         concrete_dff['corrected disp'] = concrete_dff['inch'] - concrete_dff.iloc[0]['inch']
@@ -57,7 +57,7 @@ class test_specimen:
         self.ultimate_strength, self.youngs_modulus))
         self.data_table = concrete_dff
 
-        plt.figure(dpi=300)
+        plt.figure()
         plt.plot(concrete_dff['strain'], concrete_dff['stress'],
                      label='Structural Analysis of %s' % self.specimen_name)
         plt.plot(concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * concrete_dff['strain'],
@@ -83,6 +83,60 @@ class test_specimen:
             predictive_df = pd.DataFrame(data=analysis_data)
             self.predictive_data_table = predictive_df
 
+class cob_specimen:
+    def __init__(self, file_name, specimen_name, radius, soil, water, straw, inch_column, kips_column):
+        self.file_name = file_name
+        self.specimen_name = specimen_name
+        self.radius = radius
+        self.soil = soil
+        self.water = water
+        self.straw = straw
+        self.inch_column = inch_column-1
+        self.kips_column = kips_column-1
+
+    def cobAnalysis(self):
+        ''' Takes an Excel file of inches vs kips and produces a graphical representation including
+            a scatter plot, a rolling average, and a linear regression line. Also produces key metrics
+            such as Young's Modulus and Ultimate Strength '''
+        area = (self.radius ** 2) * np.pi
+        cob_df = pd.read_excel(self.file_name)  # opens CSV file
+        cob_df.rename(columns={cob_df.columns[self.inch_column]: 'inch'}, inplace=True)
+        cob_df.rename(columns={cob_df.columns[self.kips_column]: 'kips'}, inplace=True)
+        cob_dft = cob_df[['kips', 'inch']]
+        cob_dftt = cob_dft.drop([0, 1])
+        cob_dftt['kips'] = pd.to_numeric(cob_dftt['kips'])
+        cob_dftt['inch'] = pd.to_numeric(cob_dftt['inch'])
+
+        cob_dff = cob_dftt[
+            (cob_dftt['kips'] >= 0.15) & (cob_dftt['inch'] >= 0)]  # new df with all > 0 kips and inch values
+        row_max = cob_dff['kips'].idxmax()
+
+        cob_dff['corrected disp'] = cob_dff['inch'] - cob_dff.iloc[0]['inch']
+        cob_dff['strain'] = (cob_dff['corrected disp'] / self.radius).truncate(after=row_max)
+        cob_dff['stress'] = ((cob_dff['kips'] * 1000) / area).truncate(after=row_max)
+        self.ultimate_strength = cob_dff['stress'].max()
+        cob_dff['rolling'] = cob_dff['stress'].rolling(50).mean()
+        reg_line = linregress(cob_dff['strain'].head(5000), cob_dff['stress'].head(5000))
+        self.youngs_modulus = reg_line.slope
+        print(self.specimen_name + " Ultimate Strength: %f. Young's Modulus: %f" % (
+        self.ultimate_strength, self.youngs_modulus))
+        self.data_table = cob_dff
+
+        plt.figure()
+        plt.plot(cob_dff['strain'], cob_dff['stress'],
+                     label='Structural Analysis of %s' % self.specimen_name)
+        plt.plot(cob_dff['strain'], reg_line.intercept + self.youngs_modulus * cob_dff['strain'],
+                     label='Regression Line = %fx + %f with R^2 %f' % (
+                     self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
+        plt.plot(cob_dff['strain'], cob_dff['rolling'], label='Rolling Average')
+        plt.title(
+                'Stress vs. Strain of %s with Ultimate Strength %f' % (self.specimen_name, self.ultimate_strength))
+        plt.xlabel('Strain (in/in)')
+        plt.ylabel('Stress (psi)')
+        plt.ylim(0, self.ultimate_strength)
+        plt.legend()
+        plt.show()
+        plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
 #sg.theme('LightGrey') #sets theme of window
 sg.set_options(font=('Arial Bold', 16))
@@ -119,10 +173,12 @@ choices = [
 specimen_type_cob = [
     [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')],
     [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
-    [sg.Text('Soil   '), sg.Input(expand_x=True, key='Dirt')],
+    [sg.Text('Radius    ', justification='left'), sg.Input(key='Cob Radius')],
+    [sg.Text('Soil   '), sg.Input(expand_x=True, key='Soil')],
     [sg.Text('Sand   '), sg.Input(expand_x=True, key='Sand')],
     [sg.Text('Water  '), sg.Input(expand_x=True, key='Water')],
     [sg.Text('Straw  '), sg.Input(expand_x=True, key='Straw')],
+    [sg.Text('')]
 ]
 
 
@@ -143,58 +199,123 @@ cob_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
     [specimen_type_cob],
     [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Button('OK', key='-OK-'), sg.Cancel()],
     [sg.Text('Kips Column #             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
     [sg.Text('Inch Column #             '), sg.Input(key='-INCH COLUMN-', expand_x=False)],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
 
 window = sg.Window('Concrete Machine', layout=concrete_layout, finalize=False) #creates a window based on the layout above with title and size
 #shown
 
+current_layout = concrete_layout
+
 while True:
     event, values = window.read()
 
-    current_layout = concrete_layout
 
     if event == '-CONFIRM-':
         if values['-COMBO-'] == 'Cob':
             window.close()
-            current_layout = cob_layout
             window = sg.Window('Cob Machine', cob_layout)
+            current_layout = cob_layout
 
     elif event == '-OK-':
         if current_layout == concrete_layout:
-            specimen_name = values['Specimen Name']
-            fineagg_lbs = int((values['Fine Agg']))
-            courseagg_lbs = int((values['Course Agg']))
-            cement_lbs = int((values['Cement']))
-            water_lbs = int((values['Water']))
-            flyash_lbs = int((values['Fly Ash']))
-            superplasticizer_lbs = int((values['Super']))
-            blast_fer_slg_lbs = int((values['Blast Slag']))
-            radius = int(values['Rad'])
-            age = int((values['Age']))
-            filename = values['_FILEBROWSE_']
-            kips_col = int((values['-KIPS COLUMN-']))
-            inch_col = int((values['-INCH COLUMN-']))
+            optional_vals = ['Fine Agg', 'Course Agg', 'Cement', 'Water', 'Fly Ash', 'Super', 'Blast Slag', 'Age']
+            required_vals = ['Specimen Name', 'Rad', '-INCH COLUMN-', '_FILEBROWSE_', '-KIPS COLUMN-']
 
-            total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
+            for i in optional_vals:
+                if values[i] == '':
+                    values[i] = 0
 
-            fineaggpcnt = fineagg_lbs/total_weight
-            coarseaggpcnt = courseagg_lbs/total_weight
-            cementpcnt = cement_lbs/total_weight
-            waterpcnt = water_lbs/total_weight
-            blast_fer_slg = blast_fer_slg_lbs/total_weight
-            flyash = flyash_lbs/total_weight
-            superplast = superplasticizer_lbs/total_weight
+            error = 0
 
-            mix_name = test_specimen(filename, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age,
+            for i in required_vals:
+                if values[i] == '':
+                    error += 1
+
+            if error > 0:
+                sg.popup_no_buttons("Please Enter All Required Fields", title='Error')
+
+            if error == 0:
+
+                specimen_name = values['Specimen Name']
+                fineagg_lbs = int((values['Fine Agg']))
+                courseagg_lbs = int((values['Course Agg']))
+                cement_lbs = int((values['Cement']))
+                water_lbs = int((values['Water']))
+                flyash_lbs = int((values['Fly Ash']))
+                superplasticizer_lbs = int((values['Super']))
+                blast_fer_slg_lbs = int((values['Blast Slag']))
+                radius = int(values['Rad'])
+                age = int((values['Age']))
+                filename = values['_FILEBROWSE_']
+                kips_col = int((values['-KIPS COLUMN-']))
+                inch_col = int((values['-INCH COLUMN-']))
+
+                total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
+
+
+                if total_weight > 0:
+                    fineaggpcnt = fineagg_lbs/total_weight
+                    coarseaggpcnt = courseagg_lbs/total_weight
+                    cementpcnt = cement_lbs/total_weight
+                    waterpcnt = water_lbs/total_weight
+                    blast_fer_slg = blast_fer_slg_lbs/total_weight
+                    flyash = flyash_lbs/total_weight
+                    superplast = superplasticizer_lbs/total_weight
+
+                else:
+                    fineaggpcnt = 0
+                    coarseaggpcnt = 0
+                    cementpcnt = 0
+                    waterpcnt = 0
+                    blast_fer_slg = 0
+                    flyash = 0
+                    superplast = 0
+
+                mix_name = test_specimen(filename, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age,
                                     kips_col, inch_col)
 
-            mix_name_data = mix_name.concreteAnalysis()
+                mix_name_data = mix_name.concreteAnalysis()
 
+            if event == sg.WIN_CLOSED:
+                break
 
+        elif current_layout == cob_layout:
+            optional_vals = ['Soil', 'Sand', 'Straw', 'Water']
+            required_vals = ['Specimen Name', 'Cob Radius', '-INCH COLUMN-', '_FILEBROWSE_', '-KIPS COLUMN-']
+
+            for i in optional_vals:
+                if values[i] == '':
+                    values[i] = 0
+
+            error = 0
+
+            for i in required_vals:
+                if values[i] == '':
+                    error += 1
+
+            if error > 0:
+                sg.popup_no_buttons("Please Enter All Required Fields", title='Error')
+
+            if error == 0:
+                specimen_name = values['Specimen Name']
+                soil = int(values['Soil'])
+                sand = int(values['Sand'])
+                straw = int(values['Straw'])
+                water = int(values['Water'])
+                radius = int(values['Cob Radius'])
+                inch_column = int(values['-INCH COLUMN-'])
+                filename = values['_FILEBROWSE_']
+                kips_column = int(values['-KIPS COLUMN-'])
+
+                mix_name = cob_specimen(filename, specimen_name, radius, soil, water, straw, inch_column, kips_column)
+                mix_name_data = mix_name.cobAnalysis()
+
+            if event == sg.WIN_CLOSED:
+                break
 
     elif event == sg.WIN_CLOSED: # if user closes window or clicks cancel
         break
