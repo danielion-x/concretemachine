@@ -137,7 +137,7 @@ class cob_specimen:
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
 #sg.theme('LightGrey') #sets theme of window
-sg.set_options(font=('Arial Bold', 16))
+sg.set_options(font=('Arial', 16))
 
 material_choices = ['Concrete', 'Cob', 'Other']
 
@@ -152,7 +152,8 @@ setting_choices = [
 
 specimen_type_concrete = [
     #[sg.Text('Kips Column #'), sg.Input(key='-KIPS COLUMN-'), sg.Text('Inch Column #'), sg.Input(key='-INCH COLUMN-')],
-    [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
+    [sg.Text('Specimen Name*     ', justification='left'), sg.Input(key='Specimen Name')],
+    [sg.Text('Specimen Radius*   ', justification='left'), sg.Input(default_text='2', key='Rad')],
     [sg.Text('Fine Aggregate       ', justification='left'), sg.Input(key='Fine Agg')],
     [sg.Text('Course Aggregate  ', justification='left'), sg.Input(key='Course Agg')],
     [sg.Text('Cement                    ', justification='left'), sg.Input(key='Cement')],
@@ -160,7 +161,6 @@ specimen_type_concrete = [
     [sg.Text('Fly Ash                    ', justification='left'), sg.Input(default_text='0', key='Fly Ash')],
     [sg.Text('Super Plasticizer    ', justification='left'), sg.Input(default_text='0', key='Super')],
     [sg.Text('Blast Furnace Slag ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
-    [sg.Text('Specimen Radius   ', justification='left'), sg.Input(default_text='2', key='Rad')],
     [sg.Text('Curing Time            ', justification='left'), sg.Input(default_text='28', key='Age')],
           ]
 
@@ -170,8 +170,8 @@ choices = [
 
 specimen_type_cob = [
     [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')],
-    [sg.Text('Specimen Name     ', justification='left'), sg.Input(key='Specimen Name')],
-    [sg.Text('Radius    ', justification='left'), sg.Input(key='Cob Radius')],
+    [sg.Text('Specimen Name*     ', justification='left'), sg.Input(key='Specimen Name')],
+    [sg.Text('Radius*    ', justification='left'), sg.Input(key='Cob Radius')],
     [sg.Text('Soil   '), sg.Input(expand_x=True, key='Soil')],
     [sg.Text('Sand   '), sg.Input(expand_x=True, key='Sand')],
     [sg.Text('Water  '), sg.Input(expand_x=True, key='Water')],
@@ -187,18 +187,18 @@ concrete_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
     [setting_choices],
     [specimen_type_concrete],
-    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Text('Kips Column #        '), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
-    [sg.Text('Inch Column #         '), sg.Input(key='-INCH COLUMN-', expand_x=True)],
+    [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Text('Kips Column #*        '), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
+    [sg.Text('Inch Column #*         '), sg.Input(key='-INCH COLUMN-', expand_x=True)],
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
 cob_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
     [specimen_type_cob],
-    [sg.Text('File Name'), sg.Input(key='_FILEBROWSE_',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Text('Kips Column #             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
-    [sg.Text('Inch Column #             '), sg.Input(key='-INCH COLUMN-', expand_x=False)],
+    [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Text('Kips Column #*             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
+    [sg.Text('Inch Column #*             '), sg.Input(key='-INCH COLUMN-', expand_x=False)],
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
@@ -211,7 +211,6 @@ current_layout = concrete_layout
 while True:
     event, values = window.read()
 
-
     if event == '-CONFIRM-':
         if values['-COMBO-'] == 'Cob':
             window.close()
@@ -221,7 +220,7 @@ while True:
     elif event == '-OK-':
         if current_layout == concrete_layout:
             optional_vals = ['Fine Agg', 'Course Agg', 'Cement', 'Water', 'Fly Ash', 'Super', 'Blast Slag', 'Age']
-            required_vals = ['Specimen Name', 'Rad', '-INCH COLUMN-', '_FILEBROWSE_', '-KIPS COLUMN-']
+            required_vals = ['Specimen Name', 'Rad', '-INCH COLUMN-', '-FILEBROWSE-', '-KIPS COLUMN-']
 
             for i in optional_vals:
                 if values[i] == '':
@@ -234,7 +233,7 @@ while True:
                     error += 1
 
             if error > 0:
-                sg.popup_no_buttons("Please Enter All Required Fields", title='Error')
+                sg.popup_auto_close("Please Enter All Required Fields", title='Error')
 
             if error == 0:
 
@@ -248,7 +247,7 @@ while True:
                 blast_fer_slg_lbs = int((values['Blast Slag']))
                 radius = int(values['Rad'])
                 age = int((values['Age']))
-                filename = values['_FILEBROWSE_']
+                filename = values['-FILEBROWSE-']
                 kips_col = int((values['-KIPS COLUMN-']))
                 inch_col = int((values['-INCH COLUMN-']))
 
@@ -283,7 +282,7 @@ while True:
 
         elif current_layout == cob_layout:
             optional_vals = ['Soil', 'Sand', 'Straw', 'Water']
-            required_vals = ['Specimen Name', 'Cob Radius', '-INCH COLUMN-', '_FILEBROWSE_', '-KIPS COLUMN-']
+            required_vals = ['Specimen Name', 'Cob Radius', '-INCH COLUMN-', '-FILEBROWSE-', '-KIPS COLUMN-']
 
             for i in optional_vals:
                 if values[i] == '':
@@ -296,7 +295,7 @@ while True:
                     error += 1
 
             if error > 0:
-                sg.popup_no_buttons("Please Enter All Required Fields", title='Error')
+                sg.popup_auto_close("Please Enter All Required Fields", title='Error')
 
             if error == 0:
                 specimen_name = values['Specimen Name']
@@ -306,7 +305,7 @@ while True:
                 water = int(values['Water'])
                 radius = int(values['Cob Radius'])
                 inch_column = int(values['-INCH COLUMN-'])
-                filename = values['_FILEBROWSE_']
+                filename = values['-FILEBROWSE-']
                 kips_column = int(values['-KIPS COLUMN-'])
 
                 mix_name = cob_specimen(filename, specimen_name, radius, soil, water, straw, inch_column, kips_column)
