@@ -8,7 +8,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 class concrete_specimen:
     def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt,
-                blast_fer_slg, flyash, superplast, age, kips_column, inch_column):
+                blast_fer_slg, flyash, superplast, age, kips_column, inch_column,units):
         self.file_name = file_name
         self.specimen_name = specimen_name
         self.radius = radius
@@ -26,6 +26,45 @@ class concrete_specimen:
         self.predictive_data_table = 0
         self.kips_column = kips_column-1
         self.inch_column = inch_column-1
+        self.units = units
+
+    def unit_conversion_metric2imperial(self):
+        self.fine_aggregate = fineaggpcnt * 0.00220462
+        'grams to lbs'
+        self.coarse_aggregate_percent = coarseaggpcnt * 0.00220462
+        'grams to lbs'
+        self.water_percent = waterpcnt * 0.00220462
+        'grams to lbs'
+        self.cement_percent = cementpcnt * 0.00220462
+        'grams to lbs'
+        self.blast_furnace_slag = blast_fer_slg
+        0.00220462
+        'grams to lbs'
+        self.fly_ash = flyash * 0.00220462
+        'grams to lbs'
+        self.super_plastisizer = superplast * 0.00220462
+        'grams to lbs'
+        self.radius = radius * 39.3701
+        'meters to inches'
+
+    def unit_conversion_imperial2metric(self):
+        self.fine_aggregate = fineaggpcnt * 453.592
+        'lbs to grams'
+        self.coarse_aggregate_percent = coarseaggpcnt * 453.592
+        'lbs to grams'
+        self.water_percent = waterpcnt * 453.592
+        'lbs to grams'
+        self.cement_percent = cementpcnt * 453.592
+        'lbs to grams'
+        self.blast_furnace_slag = blast_fer_slg
+        453.592
+        'lbs to grams'
+        self.fly_ash = flyash * 453.592
+        'lbs to grams'
+        self.super_plastisizer = superplast * 453.592
+        'lbs to grams'
+        self.radius = radius * 0.0254
+        'inches 2 meter'
 
     def concreteAnalysis(self):
         ''' Takes an Excel file of inches vs kips and produces a graphical representation including
