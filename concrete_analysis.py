@@ -8,7 +8,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 class concrete_specimen:
     def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt,
-                blast_fer_slg, flyash, superplast, age, kips_column, inch_column,units):
+                blast_fer_slg, flyash, superplast, age, kips_column, inch_column):
         self.file_name = file_name
         self.specimen_name = specimen_name
         self.radius = radius
@@ -26,7 +26,6 @@ class concrete_specimen:
         self.predictive_data_table = 0
         self.kips_column = kips_column-1
         self.inch_column = inch_column-1
-        self.units = units
 
     def unit_conversion_metric2imperial(self):
         self.fine_aggregate = fineaggpcnt * 0.00220462 'grams to lbs'
