@@ -8,7 +8,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 class concrete_specimen:
     def __init__(self, file_name, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt,
-                blast_fer_slg, flyash, superplast, age, kips_column, inch_column):
+                blast_fer_slg, flyash, superplast, age, kips_column, inch_column, unit_type):
         self.file_name = file_name
         self.specimen_name = specimen_name
         self.radius = radius
@@ -26,6 +26,10 @@ class concrete_specimen:
         self.predictive_data_table = 0
         self.kips_column = kips_column-1
         self.inch_column = inch_column-1
+
+        if unit_type == "Metric":
+            self.unit_conversion_imperial2metric()
+
 
     def unit_conversion_metric2imperial(self):
         self.fine_aggregate = fineaggpcnt * 0.00220462 #grams to lbs
@@ -331,8 +335,13 @@ while True:
                     flyash = 0
                     superplast = 0
 
+                if values['imperial'] == True:
+                    units = "Imperial"
+                else:
+                    units = "Metric"
+
                 mix_name = concrete_specimen(filename, specimen_name, radius, fineaggpcnt, coarseaggpcnt, waterpcnt, cementpcnt, blast_fer_slg, flyash, superplast, age,
-                                    kips_col, inch_col)
+                                    kips_col, inch_col, units)
 
                 mix_name_data = mix_name.concreteAnalysis()
 
