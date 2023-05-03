@@ -28,24 +28,24 @@ class concrete_specimen:
         self.inch_column = inch_column-1
 
     def unit_conversion_metric2imperial(self):
-        self.fine_aggregate = fineaggpcnt * 0.00220462 'grams to lbs'
-        self.coarse_aggregate_percent = coarseaggpcnt * 0.00220462'grams to lbs'
-        self.water_percent = waterpcnt * 0.00220462'grams to lbs'
-        self.cement_percent = cementpcnt * 0.00220462'grams to lbs'
-        self.blast_furnace_slag = blast_fer_slg * 0.00220462'grams to lbs'
-        self.fly_ash = flyash * 0.00220462 'grams to lbs'
-        self.super_plastisizer = superplast * 0.00220462 'grams to lbs'
-        self.radius = radius * 39.3701 'meters to inches'
+        self.fine_aggregate = fineaggpcnt * 0.00220462 #grams to lbs
+        self.coarse_aggregate_percent = coarseaggpcnt * 0.00220462 #grams to lbs
+        self.water_percent = waterpcnt * 0.00220462 #grams to lbs'
+        self.cement_percent = cementpcnt * 0.00220462 #grams to lbs'
+        self.blast_furnace_slag = blast_fer_slg * 0.00220462 #grams to lbs'
+        self.fly_ash = flyash * 0.00220462 #grams to lbs
+        self.super_plastisizer = superplast * 0.00220462 #grams to lbs'
+        self.radius = radius * 39.3701 #meters to inches'
 
     def unit_conversion_imperial2metric(self):
-        self.fine_aggregate = fineaggpcnt * 453.592 'lbs to grams'
-        self.coarse_aggregate_percent = coarseaggpcnt * 453.592'lbs to grams'
-        self.water_percent = waterpcnt * 453.592 'lbs to grams'
-        self.cement_percent = cementpcnt * 453.592 'lbs to grams'
-        self.blast_furnace_slag = blast_fer_slg * 453.592 'lbs to grams'
-        self.fly_ash = flyash * 453.592 'lbs to grams'
-        self.super_plastisizer = superplast * 453.592 'lbs to grams'
-        self.radius = radius * 0.0254 'inches 2 meter'
+        self.fine_aggregate = fineaggpcnt * 453.592 #lbs to grams'
+        self.coarse_aggregate_percent = coarseaggpcnt * 453.592 #lbs to grams'
+        self.water_percent = waterpcnt * 453.592 #lbs to grams'
+        self.cement_percent = cementpcnt * 453.592 #lbs to grams'
+        self.blast_furnace_slag = blast_fer_slg * 453.592 #lbs to grams'
+        self.fly_ash = flyash * 453.592 #lbs to grams'
+        self.super_plastisizer = superplast * 453.592 #lbs to grams'
+        self.radius = radius * 0.0254 #inches 2 meter'
 
     def concreteAnalysis(self):
         ''' Takes an Excel file of inches vs kips and produces a graphical representation including
@@ -156,6 +156,17 @@ class cob_specimen:
         plt.show()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
+class stress_strain_specimen:
+    def __init__(self, file_name, specimen_name):
+        self.file_name = file_name
+        self.specimen_name = specimen_name
+
+
+'''
+BEGIN GUI CODE
+'''
+
+
 #sg.theme('LightGrey') #sets theme of window
 sg.set_options(font=('Arial', 16))
 
@@ -164,25 +175,33 @@ material_choices = ['Concrete', 'Cob', 'Other']
 
 setting_choices = [
     #[sg.Text('File Name'), sg.Input(enable_events=True, key='-IN-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Text('Current Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=False)],
+    #[sg.Text('Current Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=False)],
     [sg.Text('Desired Units'), sg.Radio("Imperial", "gen", key='imperial', default=True), sg.Radio("Metric", "gen", key='metric', default=False)],
     [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')]
 ]
 
 
+home_screen = [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Button(button_text="Specimen Analysis from Kips/Inch File", key='Kip/Inch')],
+    [sg.Button(button_text="Specimen Analysis from Stress/Strain File", key='Stress/Strain')],
+    [sg.Button(button_text="Predict Performance from Ingredients", key='Predict')],
+]
+
 specimen_type_concrete = [
     #[sg.Text('Kips Column #'), sg.Input(key='-KIPS COLUMN-'), sg.Text('Inch Column #'), sg.Input(key='-INCH COLUMN-')],
     [sg.Text('Specimen Name*     ', justification='left'), sg.Input(key='Specimen Name')],
-    [sg.Text('Specimen Radius*   ', justification='left'), sg.Input(default_text='2', key='Rad')],
-    [sg.Text('Fine Aggregate       ', justification='left'), sg.Input(key='Fine Agg')],
-    [sg.Text('Course Aggregate  ', justification='left'), sg.Input(key='Course Agg')],
-    [sg.Text('Cement                    ', justification='left'), sg.Input(key='Cement')],
-    [sg.Text('Water                       ', justification='left'), sg.Input(key='Water')],
-    [sg.Text('Fly Ash                    ', justification='left'), sg.Input(default_text='0', key='Fly Ash')],
-    [sg.Text('Super Plasticizer    ', justification='left'), sg.Input(default_text='0', key='Super')],
-    [sg.Text('Blast Furnace Slag ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
-    [sg.Text('Curing Time            ', justification='left'), sg.Input(default_text='28', key='Age')],
+    [sg.Text('Specimen Radius* (in) ', justification='left'), sg.Input(default_text='2', key='Rad')],
+    [sg.Text('Fine Aggregate (lbs)       ', justification='left'), sg.Input(key='Fine Agg')],
+    [sg.Text('Course Aggregate (lbs) ', justification='left'), sg.Input(key='Course Agg')],
+    [sg.Text('Cement (lbs)                 ', justification='left'), sg.Input(key='Cement')],
+    [sg.Text('Water (lbs)                     ', justification='left'), sg.Input(key='Water')],
+    [sg.Text('Fly Ash (lbs)                   ', justification='left'), sg.Input(default_text='0', key='Fly Ash')],
+    [sg.Text('Super Plasticizer (lbs)    ', justification='left'), sg.Input(default_text='0', key='Super')],
+    [sg.Text('Blast Furnace Slag (lbs) ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
+    [sg.Text('Curing Time (days)            ', justification='left'), sg.Input(default_text='28', key='Age')],
           ]
+
 
 choices = [
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
@@ -191,11 +210,11 @@ choices = [
 specimen_type_cob = [
     [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')],
     [sg.Text('Specimen Name*     ', justification='left'), sg.Input(key='Specimen Name')],
-    [sg.Text('Radius*    ', justification='left'), sg.Input(key='Cob Radius')],
-    [sg.Text('Soil   '), sg.Input(expand_x=True, key='Soil')],
-    [sg.Text('Sand   '), sg.Input(expand_x=True, key='Sand')],
-    [sg.Text('Water  '), sg.Input(expand_x=True, key='Water')],
-    [sg.Text('Straw  '), sg.Input(expand_x=True, key='Straw')],
+    [sg.Text('Radius* (in)   ', justification='left'), sg.Input(key='Cob Radius')],
+    [sg.Text('Soil (lbs)   '), sg.Input(expand_x=True, key='Soil')],
+    [sg.Text('Sand (lbs)   '), sg.Input(expand_x=True, key='Sand')],
+    [sg.Text('Water (lbs)  '), sg.Input(expand_x=True, key='Water')],
+    [sg.Text('Straw (lbs)  '), sg.Input(expand_x=True, key='Straw')],
     [sg.Text('')]
 ]
 
@@ -207,11 +226,20 @@ concrete_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
     [setting_choices],
     [specimen_type_concrete],
+    [sg.Text('File Options', justification='Center')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Text('Kips Column #*        '), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
     [sg.Text('Inch Column #*         '), sg.Input(key='-INCH COLUMN-', expand_x=True)],
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
+
+stressstrain_specimen =  [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Text('Stress Column #*        '), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
+    [sg.Text('Strain Column #*         '), sg.Input(key='-INCH COLUMN-', expand_x=True)],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+]
 
 cob_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
@@ -222,14 +250,25 @@ cob_layout = [
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
+current_layout = home_screen
 
-window = sg.Window('Concrete Machine', layout=concrete_layout, finalize=False) #creates a window based on the layout above with title and size
+window = sg.Window('Concrete Machine', layout=current_layout, finalize=False) #creates a window based on the layout above with title and size
 #shown
 
-current_layout = concrete_layout
+
 
 while True:
     event, values = window.read()
+
+    if event == 'Kip/Inch':
+        window.close()
+        window = sg.Window('Concrete Machine', concrete_layout)
+        current_layout = concrete_layout
+
+    if event == 'Stress/Strain':
+        window.close()
+        window = sg.Window('Stress Strain Machine', stressstrain_specimen)
+        current_layout = stressstrain_specimen
 
     if event == '-CONFIRM-':
         if values['-COMBO-'] == 'Cob':
