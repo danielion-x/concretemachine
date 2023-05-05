@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import linregress
 import PySimpleGUI as sg
+import PyInstaller
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -186,6 +187,62 @@ class cob_specimen:
         plt.show()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
+class UTM_analysis:
+    def __init__(self, file_name, specimen_name):
+        self.file_name = file_name
+        self.specimen_name = specimen_name
+        self.radius = 0
+
+    def specimenAnalysis(self):
+        self.file_extension = self.file_name[-4:]
+
+        if self.file_extension == "xlsx":
+            self.concrete_df = pd.read_excel(self.file_name)
+        elif self.file_extension == ".csv":
+            self.concrete_df = pd.read_csv(self.file_name)
+
+        self.radius = self.concrete_df.iloc[0]['Diameter (in):']/2
+        self.ultimate_strength = self.concrete_df.iloc[0]['Stress at Break (psi):']
+
+        if self.file_extension == "xlsx":
+            self.concrete_dft = pd.read_excel(self.file_name, skiprows=2)
+        elif self.file_extension == ".csv":
+            self.concrete_dft = pd.read_csv(self.file_name, skiprows=2)
+
+
+        self.concrete_dft['Corrected Strain'] = -1*(self.concrete_dft['Ram Position (in)'] - self.concrete_dft.iloc[0]['Ram Position (in)'])
+
+        self.concrete_dff = self.concrete_dft.rename(columns={'Stress (psi)': 'stress', 'Corrected Strain': 'strain'})
+
+
+        self.reg_line_head = int(4/7*len(self.concrete_dff))
+
+
+        self.concrete_dff['rolling'] = self.concrete_dff['stress'].rolling(50).mean()
+        reg_line = linregress(self.concrete_dff['strain'].head(self.reg_line_head), self.concrete_dff['stress'].head(self.reg_line_head))
+        self.youngs_modulus = reg_line.slope
+        print(self.specimen_name + " Ultimate Strength: %f. Young's Modulus: %f" % (
+        self.ultimate_strength, self.youngs_modulus))
+        self.data_table = self.concrete_dff
+
+        plt.figure()
+        plt.plot(self.concrete_dff['strain'], self.concrete_dff['stress'],
+                     label='Structural Analysis of %s' % self.specimen_name)
+        plt.plot(self.concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * self.concrete_dff['strain'],
+                     label='Regression Line = %fx + %f with R^2 %f' % (
+                     self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
+        plt.plot(self.concrete_dff['strain'], self.concrete_dff['rolling'], label='Rolling Average')
+        plt.title(
+                'Stress vs. Strain of %s with Ultimate Strength %f' % (self.specimen_name, self.ultimate_strength))
+        plt.xlabel('Strain (in/in)')
+        plt.ylabel('Stress (psi)')
+        plt.ylim(0, self.ultimate_strength)
+        plt.legend()
+        plt.show()
+        plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
+
+
+
 
 '''
 BEGIN GUI CODE
@@ -210,6 +267,7 @@ home_screen = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Button(button_text="Specimen Analysis from Kips/Inch File", key='Kip/Inch')],
     [sg.Button(button_text="Specimen Analysis from Stress/Strain File", key='Stress/Strain')],
+    [sg.Button(button_text='UTM Analysis', key='UTM')],
     [sg.Button(button_text="Predict Performance from Ingredients", key='Predict')],
 ]
 
@@ -275,6 +333,13 @@ cob_layout = [
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
     ]
 
+utm_layout = [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
+    [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
+    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+]
+
 current_layout = home_screen
 
 window = sg.Window('Concrete Machine', layout=current_layout, finalize=False) #creates a window based on the layout above with title and size
@@ -303,6 +368,11 @@ while True:
 
     if event == 'Predict':
         sg.popup_auto_close("Feature Coming Soon", title="Coming Soon")
+
+    if event == 'UTM':
+        window.close()
+        window = sg.Window('UTM Data Analysis', utm_layout)
+        current_layout = utm_layout
 
     elif event == '-OK-':
         if current_layout == concrete_layout:
@@ -427,5 +497,26 @@ while True:
             if event == sg.WIN_CLOSED:
                 break
 
+        elif current_layout == utm_layout:
+            required_vals = ['Specimen Name', '-FILEBROWSE-']
+
+            error = 0
+
+            for i in required_vals:
+                if values[i] == '':
+                    error += 1
+
+            if error > 0:
+                sg.popup_auto_close("Please Enter All Required Fields", title='Error')
+
+            if error == 0:
+                specimen_name = values['Specimen Name']
+                filename = values['-FILEBROWSE-']
+
+                mix_name = UTM_analysis(filename, specimen_name)
+                mix_name_data = mix_name.specimenAnalysis()
+
     elif event == sg.WIN_CLOSED: # if user closes window or clicks cancel
         break
+
+
