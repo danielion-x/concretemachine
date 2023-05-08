@@ -67,8 +67,8 @@ class concrete_specimen:
 
         if self.kips_or_strain == 'Kips':
             area = (self.radius ** 2) * np.pi  # opens CSV file
-            #concrete_df.rename(columns={concrete_df.columns[self.inch_column]: 'inch'}, inplace=True)
-            #concrete_df.rename(columns={concrete_df.columns[self.kips_column]: 'kips'}, inplace=True)
+            concrete_df.rename(columns={concrete_df.columns[self.inch_column]: 'inch'}, inplace=True)
+            concrete_df.rename(columns={concrete_df.columns[self.kips_column]: 'kips'}, inplace=True)
             concrete_dft = concrete_df[['kips', 'inch']]
             concrete_dftt = concrete_dft.drop([0, 1])
             concrete_dftt['kips'] = pd.to_numeric(concrete_dftt['kips'])
@@ -264,7 +264,7 @@ setting_choices = [
 
 
 home_screen = [
-    [sg.Image(filename='mame logo.png', expand_x=True)],
+    #[sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Button(button_text="Specimen Analysis from Kips/Inch File", key='Kip/Inch')],
     [sg.Button(button_text="Specimen Analysis from Stress/Strain File", key='Stress/Strain')],
     [sg.Button(button_text='UTM Analysis', key='UTM')],
@@ -306,7 +306,7 @@ specimen_type = specimen_type_concrete
 
 
 concrete_layout = [
-    [sg.Image(filename='mame logo.png', expand_x=True)],
+    #[sg.Image(filename='mame logo.png', expand_x=True)],
     [setting_choices],
     [specimen_type_concrete],
     [sg.Text('File Options', expand_x='true', justification='center', font=('Arial Bold', 16))],
@@ -317,7 +317,7 @@ concrete_layout = [
     ]
 
 stressstrain_specimen =  [
-    [sg.Image(filename='mame logo.png', expand_x=True)],
+    #[sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
     [sg.Text('Radius*'), sg.Input(key='Radius')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
@@ -325,7 +325,7 @@ stressstrain_specimen =  [
 ]
 
 cob_layout = [
-    [sg.Image(filename='mame logo.png', expand_x=True)],
+    #[sg.Image(filename='mame logo.png', expand_x=True)],
     [specimen_type_cob],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Text('Kips Column #*             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
@@ -334,7 +334,7 @@ cob_layout = [
     ]
 
 utm_layout = [
-    [sg.Image(filename='mame logo.png', expand_x=True)],
+    #[sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Button('OK', key='-OK-'), sg.Cancel()],
