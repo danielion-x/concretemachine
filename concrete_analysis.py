@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import linregress
 import PySimpleGUI as sg
-import PyInstaller
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -116,11 +115,11 @@ class concrete_specimen:
                      self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
         plt.plot(concrete_dff['strain'], concrete_dff['rolling'], label='Rolling Average')
         plt.title(
-                'Stress vs. Strain of %s with Ultimate Strength %f' % (self.specimen_name, self.ultimate_strength))
+                'Stress vs. Strain of %s with Ultimate Strength %f kips' % (self.specimen_name, self.ultimate_strength))
         plt.xlabel('Strain (in/in)')
         plt.ylabel('Stress (psi)')
         plt.ylim(0, self.ultimate_strength)
-        plt.legend()
+        plt.legend(fontsize=10)
         plt.show()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
@@ -179,11 +178,11 @@ class cob_specimen:
                      self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
         plt.plot(cob_dff['strain'], cob_dff['rolling'], label='Rolling Average')
         plt.title(
-                'Stress vs. Strain of %s with Ultimate Strength %f' % (self.specimen_name, self.ultimate_strength))
+                'Stress vs. Strain of %s with Ultimate Strength %f kips' % (self.specimen_name, self.ultimate_strength))
         plt.xlabel('Strain (in/in)')
         plt.ylabel('Stress (psi)')
         plt.ylim(0, self.ultimate_strength)
-        plt.legend()
+        plt.legend(fontsize=10)
         plt.show()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
@@ -233,11 +232,11 @@ class UTM_analysis:
                      self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
         plt.plot(self.concrete_dff['strain'], self.concrete_dff['rolling'], label='Rolling Average')
         plt.title(
-                'Stress vs. Strain of %s with Ultimate Strength %f' % (self.specimen_name, self.ultimate_strength))
+                'Stress vs. Strain of %s with Ultimate Strength %f psi' % (self.specimen_name, self.ultimate_strength))
         plt.xlabel('Strain (in/in)')
         plt.ylabel('Stress (psi)')
         plt.ylim(0, self.ultimate_strength)
-        plt.legend()
+        plt.legend(fontsize=10)
         plt.show()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
@@ -264,7 +263,7 @@ setting_choices = [
 
 
 home_screen = [
-    #[sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Button(button_text="Specimen Analysis from Kips/Inch File", key='Kip/Inch')],
     [sg.Button(button_text="Specimen Analysis from Stress/Strain File", key='Stress/Strain')],
     [sg.Button(button_text='UTM Analysis', key='UTM')],
@@ -313,7 +312,7 @@ concrete_layout = [
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True, ), sg.FileBrowse()],
     [sg.Text('Kips Column #*         '), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
     [sg.Text('Inch Column #*         '), sg.Input(key='-INCH COLUMN-', expand_x=True)],
-    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+    [sg.Button('OK', key='-OK-')],
     ]
 
 stressstrain_specimen =  [
@@ -321,7 +320,7 @@ stressstrain_specimen =  [
     [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
     [sg.Text('Radius*'), sg.Input(key='Radius')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+    [sg.Button('OK', key='-OK-')],
 ]
 
 cob_layout = [
@@ -330,14 +329,14 @@ cob_layout = [
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Text('Kips Column #*             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
     [sg.Text('Inch Column #*             '), sg.Input(key='-INCH COLUMN-', expand_x=False)],
-    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+    [sg.Button('OK', key='-OK-')],
     ]
 
 utm_layout = [
     #[sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Button('OK', key='-OK-'), sg.Cancel()],
+    [sg.Button('OK', key='-OK-')],
 ]
 
 current_layout = home_screen
@@ -373,6 +372,11 @@ while True:
         window.close()
         window = sg.Window('UTM Data Analysis', utm_layout)
         current_layout = utm_layout
+
+    elif event == '-CANCEL-':
+        window.close()
+        window = sg.Window('NOMAD - Alpha Version',home_screen)
+        current_layout = home_screen
 
     elif event == '-OK-':
         if current_layout == concrete_layout:
