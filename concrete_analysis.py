@@ -440,7 +440,7 @@ while True:
         pred_strength = str(predictive_strength[0])
 
         ch = sg.popup_yes_no(
-            'We Predict Your Mix will have strength ' + pred_strength + ' psi. Would you like to analyze your data for comparison? (kips/inch data only)')
+            'We predict your mix will have strength ' + pred_strength + ' psi. Would you like to analyze your data for comparison? (kips/inch data only)')
 
         if ch == 'Yes':
             window.close()
