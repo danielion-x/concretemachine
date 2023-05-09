@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import linregress
 import PySimpleGUI as sg
+import openpyxl
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -15,42 +20,11 @@ class concrete_specimen:
         self.youngs_modulus = 0
         self.data_table = 0
         self.kips_or_strain = kips_or_strain
-        #self.fine_aggregate = fineaggpcnt * 0.453592
-        #self.coarse_aggregate_percent = coarseaggpcnt * 0.453592
-        #self.water_percent = waterpcnt * 0.453592
-        #self.cement_percent = cementpcnt * 0.453592
-        #self.blast_furnace_slag = blast_fer_slg * 0.453592
-        #self.fly_ash = flyash * 0.453592
-        #self.super_plastisizer = superplast * 0.453592
-        #self.age = age
         self.predictive_data_table = 0
         self.kips_column = kips_column-1
         self.inch_column = inch_column-1
 
-        #if unit_type == "Metric":
-            #self.unit_conversion_imperial2metric()
 
-    '''
-    def unit_conversion_metric2imperial(self):
-        self.fine_aggregate = fineaggpcnt * 0.00220462 #grams to lbs
-        self.coarse_aggregate_percent = coarseaggpcnt * 0.00220462 #grams to lbs
-        self.water_percent = waterpcnt * 0.00220462 #grams to lbs'
-        self.cement_percent = cementpcnt * 0.00220462 #grams to lbs'
-        self.blast_furnace_slag = blast_fer_slg * 0.00220462 #grams to lbs'
-        self.fly_ash = flyash * 0.00220462 #grams to lbs
-        self.super_plastisizer = superplast * 0.00220462 #grams to lbs'
-        self.radius = radius * 39.3701 #meters to inches'
-
-    def unit_conversion_imperial2metric(self):
-        self.fine_aggregate = fineaggpcnt * 453.592 #lbs to grams'
-        self.coarse_aggregate_percent = coarseaggpcnt * 453.592 #lbs to grams'
-        self.water_percent = waterpcnt * 453.592 #lbs to grams'
-        self.cement_percent = cementpcnt * 453.592 #lbs to grams'
-        self.blast_furnace_slag = blast_fer_slg * 453.592 #lbs to grams'
-        self.fly_ash = flyash * 453.592 #lbs to grams'
-        self.super_plastisizer = superplast * 453.592 #lbs to grams'
-        self.radius = radius * 0.0254 #inches 2 meter'
-    '''
 
     def concreteAnalysis(self):
         ''' Takes an Excel file of inches vs kips and produces a graphical representation including
@@ -111,19 +85,21 @@ class concrete_specimen:
         plt.plot(concrete_dff['strain'], concrete_dff['stress'],
                      label='Structural Analysis of %s' % self.specimen_name)
         plt.plot(concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * concrete_dff['strain'],
-                     label='Regression Line = %fx + %f with R^2 %f' % (
-                     self.youngs_modulus, reg_line.intercept, reg_line.rvalue))
+                     label='Regression Line = %ix + %i with R^2 %f' % (
+                     int(self.youngs_modulus), int(reg_line.intercept), reg_line.rvalue))
         plt.plot(concrete_dff['strain'], concrete_dff['rolling'], label='Rolling Average')
+
+        if 'pred_strength' in globals():
+            plt.hlines(y=float(pred_strength), xmin=0, xmax=concrete_dff['strain'].max(), label='Predicted Strength')
+
         plt.title(
                 'Stress vs. Strain of %s with Ultimate Strength %f kips' % (self.specimen_name, self.ultimate_strength))
         plt.xlabel('Strain (in/in)')
         plt.ylabel('Stress (psi)')
         plt.ylim(0, self.ultimate_strength)
-        plt.legend(fontsize=10)
+        plt.legend(fontsize=10, loc='lower right')
         plt.show()
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
-
-        #draw_figure(_VARS['window']['figCanvas'].TKCanvas, fig)
 
         def predictiveAnalysis(self):
             analysis_data = {'Cement': [self.cement_percent], 'Blast Furnace Slag': [self.blast_furnace_slag],
@@ -241,6 +217,67 @@ class UTM_analysis:
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
 
+class Predictive:
+    def __init__(self, cement, blast_furnace_slag, flyash, water, super, coarse_agg, fine_agg, age):
+        self.df_train = pd.read_csv('concrete_data.csv')
+        self.cement = cement
+        self.blast_furnace_slag = blast_furnace_slag
+        self.flyash = flyash
+        self.water = water
+        self.super = super
+        self.coarse_agg = coarse_agg
+        self.fine_agg = fine_agg
+        self.age = age
+        self.conversions()
+        self.predictor()
+
+
+    def conversions(self):
+        self.lb_per_kg = 1.68555
+        self.psi_per_mpa = 145.038
+        self.df_train['Cement'] = self.df_train['Cement']* self.lb_per_kg  # grams to lbs
+        self.df_train['Coarse Aggregate'] = self.df_train['Coarse Aggregate'] * self.lb_per_kg  # grams to lbs
+        self.df_train['Water'] = self.df_train['Water'] * self.lb_per_kg  # grams to lbs'
+        self.df_train['Cement'] = self.df_train['Cement'] * self.lb_per_kg  # grams to lbs'
+        self.df_train['Blast Furnace Slag'] = self.df_train['Blast Furnace Slag'] * self.lb_per_kg
+        self.df_train['Fine Aggregate'] = self.df_train['Fine Aggregate'] * self.lb_per_kg# grams to lbs'
+        self.df_train['Fly Ash'] = self.df_train['Fly Ash'] * self.lb_per_kg  # grams to lbs
+        self.df_train['Superplasticizer']  = self.df_train['Superplasticizer'] * self.lb_per_kg  # grams to lbs'
+        self.df_train['Strength'] = self.df_train['Strength'] * self.psi_per_mpa
+
+    def predictor(self):
+
+        self.X = self.df_train.drop("Strength", axis=1).values
+        self.y = self.df_train["Strength"]
+
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, random_state=1, test_size=0.2)
+
+        self.df_test = pd.DataFrame(self.X).iloc[0:0]
+        self.df_test.loc[-1] = [self.cement, self.blast_furnace_slag, self.flyash, self.water, self.super,
+                                               self.coarse_agg, self.fine_agg, self.age]
+
+        self.scaler = StandardScaler()
+
+        self.scaler.fit(self.X)
+        self.scaler.fit(self.df_test)
+
+        self.X = self.scaler.transform(self.X)
+        #self.y = self.scaler.transform(self.y)
+
+        params = {'objective': 'reg:squarederror',
+                  'max_depth': 6,
+                  'colsample_bylevel': 0.5,
+                  'learning_rate': 0.01,
+                  'random_state': 20}
+
+        self.model = XGBRegressor(learning_rate=0.05, n_estimators=250)
+
+        self.model.fit(self.X, self.y)
+
+        self.strength_predict = self.model.predict(self.df_test)
+
+        return self.strength_predict
+
 
 
 '''
@@ -274,14 +311,6 @@ specimen_type_concrete = [
     #[sg.Text('Kips Column #'), sg.Input(key='-KIPS COLUMN-'), sg.Text('Inch Column #'), sg.Input(key='-INCH COLUMN-')],
     [sg.Text('Specimen Name*        ', justification='left'), sg.Input(key='Specimen Name')],
     [sg.Text('Specimen Radius* (in) ', justification='left'), sg.Input(default_text='2', key='Rad')],
-    #[sg.Text('Fine Aggregate (lbs)       ', justification='left'), sg.Input(key='Fine Agg')],
-    #[sg.Text('Course Aggregate (lbs) ', justification='left'), sg.Input(key='Course Agg')],
-    #[sg.Text('Cement (lbs)                 ', justification='left'), sg.Input(key='Cement')],
-    #[sg.Text('Water (lbs)                     ', justification='left'), sg.Input(key='Water')],
-    #[sg.Text('Fly Ash (lbs)                   ', justification='left'), sg.Input(default_text='0', key='Fly Ash')],
-    #[sg.Text('Super Plasticizer (lbs)    ', justification='left'), sg.Input(default_text='0', key='Super')],
-    #[sg.Text('Blast Furnace Slag (lbs) ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
-    #[sg.Text('Curing Time (days)            ', justification='left'), sg.Input(default_text='28', key='Age')],
           ]
 
 
@@ -293,19 +322,29 @@ specimen_type_cob = [
     [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')],
     [sg.Text('Specimen Name*     ', justification='left'), sg.Input(key='Specimen Name')],
     [sg.Text('Radius* (in)              ', justification='left'), sg.Input(key='Cob Radius', default_text='3')],
-    #[sg.Text('Soil (lbs)   '), sg.Input(expand_x=True, key='Soil')],
-    #[sg.Text('Sand (lbs)   '), sg.Input(expand_x=True, key='Sand')],
-    #[sg.Text('Water (lbs)  '), sg.Input(expand_x=True, key='Water')],
-    #[sg.Text('Straw (lbs)  '), sg.Input(expand_x=True, key='Straw')],
     [sg.Text('')]
 ]
 
+is_visible = False
+
+predictive_layout = [
+    [sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Text('Fine Aggregate (lb/yd^3)       ', justification='left'), sg.Input(key='Fine Agg')],
+    [sg.Text('Course Aggregate (lb/yd^3) ', justification='left'), sg.Input(key='Coarse Agg')],
+    [sg.Text('Cement (lb/yd^3)                 ', justification='left'), sg.Input(key='Cement')],
+    [sg.Text('Water (lb/yd^3)                     ', justification='left'), sg.Input(key='Water')],
+    [sg.Text('Fly Ash (lb/yd^3)                   ', justification='left'), sg.Input(default_text='0', key='Fly Ash')],
+    [sg.Text('Super Plasticizer (lb/yd^3)    ', justification='left'), sg.Input(default_text='0', key='Super')],
+    [sg.Text('Blast Furnace Slag (lb/yd^3) ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
+    [sg.Text('Curing Time (days)            ', justification='left'), sg.Input(default_text='28', key='Age')],
+    [sg.Button('Predict', key='Run Predictor')],
+]
 
 specimen_type = specimen_type_concrete
 
 
 concrete_layout = [
-    #[sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Image(filename='mame logo.png', expand_x=True)],
     [setting_choices],
     [specimen_type_concrete],
     [sg.Text('File Options', expand_x='true', justification='center', font=('Arial Bold', 16))],
@@ -316,7 +355,7 @@ concrete_layout = [
     ]
 
 stressstrain_specimen =  [
-    #[sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
     [sg.Text('Radius*'), sg.Input(key='Radius')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
@@ -324,7 +363,7 @@ stressstrain_specimen =  [
 ]
 
 cob_layout = [
-    #[sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Image(filename='mame logo.png', expand_x=True)],
     [specimen_type_cob],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Text('Kips Column #*             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
@@ -333,7 +372,7 @@ cob_layout = [
     ]
 
 utm_layout = [
-    #[sg.Image(filename='mame logo.png', expand_x=True)],
+    [sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
     [sg.Button('OK', key='-OK-')],
@@ -366,7 +405,9 @@ while True:
             current_layout = cob_layout
 
     if event == 'Predict':
-        sg.popup_auto_close("Feature Coming Soon", title="Coming Soon")
+        window.close()
+        window = sg.Window('Concrete Predictor', predictive_layout)
+        current_layout = predictive_layout
 
     if event == 'UTM':
         window.close()
@@ -377,6 +418,34 @@ while True:
         window.close()
         window = sg.Window('NOMAD - Alpha Version',home_screen)
         current_layout = home_screen
+
+    elif event == 'Run Predictor':
+        vals = ['Cement', 'Coarse Agg', 'Fine Agg', 'Water', 'Fly Ash', 'Super', 'Blast Slag', 'Age']
+
+        for i in vals:
+            if values[i] == '':
+                values[i] = 0
+
+        cement = int(values['Cement'])
+        coarse_agg = int(values['Coarse Agg'])
+        fine_agg = int(values['Fine Agg'])
+        water = int(values['Water'])
+        flyash = int(values['Fly Ash'])
+        super = int(values['Super'])
+        blast_furnace_slag = int(values['Blast Slag'])
+        age = int(values['Age'])
+
+        mix = Predictive(cement, blast_furnace_slag, flyash, water, super, coarse_agg, fine_agg, age)
+        predictive_strength = mix.predictor()
+        pred_strength = str(predictive_strength[0])
+
+        ch = sg.popup_yes_no(
+            'We Predict Your Mix will have strength ' + pred_strength + ' psi. Would you like to analyze your data for comparison? (kips/inch data only)')
+
+        if ch == 'Yes':
+            window.close()
+            window = sg.Window('Concrete Machine', concrete_layout)
+            current_layout = concrete_layout
 
     elif event == '-OK-':
         if current_layout == concrete_layout:
@@ -397,42 +466,6 @@ while True:
             specimen_name = values['Specimen Name']
             radius = int(values['Rad'])
 
-            '''
-            if error == 0:
-
-                specimen_name = values['Specimen Name']
-                fineagg_lbs = int((values['Fine Agg']))
-                courseagg_lbs = int((values['Course Agg']))
-                cement_lbs = int((values['Cement']))
-                water_lbs = int((values['Water']))
-                flyash_lbs = int((values['Fly Ash']))
-                superplasticizer_lbs = int((values['Super']))
-                blast_fer_slg_lbs = int((values['Blast Slag']))
-                radius = int(values['Rad'])
-                age = int((values['Age']))
-                filename = values['-FILEBROWSE-']
-
-                total_weight = fineagg_lbs + courseagg_lbs + cement_lbs + water_lbs
-
-
-                if total_weight > 0:
-                    fineaggpcnt = fineagg_lbs/total_weight
-                    coarseaggpcnt = courseagg_lbs/total_weight
-                    cementpcnt = cement_lbs/total_weight
-                    waterpcnt = water_lbs/total_weight
-                    blast_fer_slg = blast_fer_slg_lbs/total_weight
-                    flyash = flyash_lbs/total_weight
-                    superplast = superplasticizer_lbs/total_weight
-
-                else:
-                    fineaggpcnt = 0
-                    coarseaggpcnt = 0
-                    cementpcnt = 0
-                    waterpcnt = 0
-                    blast_fer_slg = 0
-                    flyash = 0
-                    superplast = 0
-                '''
             if values['imperial'] == True:
                 units = "Imperial"
             else:
