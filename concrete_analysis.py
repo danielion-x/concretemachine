@@ -11,6 +11,65 @@ from sklearn.ensemble import RandomForestRegressor
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
+class Predictive:
+    def __init__(self, cement, blast_furnace_slag, flyash, water, super, coarse_agg, fine_agg, age):
+        self.df_train = pd.read_csv('concrete_data.csv')
+        self.cement = cement
+        self.blast_furnace_slag = blast_furnace_slag
+        self.flyash = flyash
+        self.water = water
+        self.super = super
+        self.coarse_agg = coarse_agg
+        self.fine_agg = fine_agg
+        self.age = age
+        self.conversions()
+        self.predictor()
+
+    def conversions(self):
+        self.lb_per_kg = 1.68555
+        self.psi_per_mpa = 145.038
+        self.df_train['Cement'] = self.df_train['Cement']* self.lb_per_kg  # grams to lbs
+        self.df_train['Coarse Aggregate'] = self.df_train['Coarse Aggregate'] * self.lb_per_kg  # grams to lbs
+        self.df_train['Water'] = self.df_train['Water'] * self.lb_per_kg  # grams to lbs'
+        self.df_train['Cement'] = self.df_train['Cement'] * self.lb_per_kg  # grams to lbs'
+        self.df_train['Blast Furnace Slag'] = self.df_train['Blast Furnace Slag'] * self.lb_per_kg
+        self.df_train['Fine Aggregate'] = self.df_train['Fine Aggregate'] * self.lb_per_kg# grams to lbs'
+        self.df_train['Fly Ash'] = self.df_train['Fly Ash'] * self.lb_per_kg  # grams to lbs
+        self.df_train['Superplasticizer']  = self.df_train['Superplasticizer'] * self.lb_per_kg  # grams to lbs'
+        self.df_train['Strength'] = self.df_train['Strength'] * self.psi_per_mpa
+
+    def predictor(self):
+        self.X = self.df_train.drop("Strength", axis=1).values
+        self.y = self.df_train["Strength"]
+
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, random_state=1, test_size=0.2)
+
+        self.df_test = pd.DataFrame(self.X).iloc[0:0]
+        self.df_test.loc[-1] = [self.cement, self.blast_furnace_slag, self.flyash, self.water, self.super,
+                                               self.coarse_agg, self.fine_agg, self.age]
+
+        self.scaler = StandardScaler()
+
+        self.scaler.fit(self.X)
+        self.scaler.fit(self.df_test)
+
+        self.X = self.scaler.transform(self.X)
+        #self.y = self.scaler.transform(self.y)
+
+        params = {'objective': 'reg:squarederror',
+                  'max_depth': 6,
+                  'colsample_bylevel': 0.5,
+                  'learning_rate': 0.01,
+                  'random_state': 20}
+
+        self.model = XGBRegressor(learning_rate=0.05, n_estimators=250)
+
+        self.model.fit(self.X, self.y)
+
+        self.strength_predict = self.model.predict(self.df_test)
+
+        return self.strength_predict
+
 class concrete_specimen:
     def __init__(self, file_name, specimen_name, radius, kips_column, inch_column, unit_type, kips_or_strain):
         self.file_name = file_name
@@ -83,14 +142,14 @@ class concrete_specimen:
 
         plt.figure()
         plt.plot(concrete_dff['strain'], concrete_dff['stress'],
-                     label='Structural Analysis of %s' % self.specimen_name)
+                     label='Stress vs. Strain of %s' % self.specimen_name)
         plt.plot(concrete_dff['strain'], reg_line.intercept + self.youngs_modulus * concrete_dff['strain'],
                      label='Regression Line = %ix + %i with R^2 %f' % (
                      int(self.youngs_modulus), int(reg_line.intercept), reg_line.rvalue))
         plt.plot(concrete_dff['strain'], concrete_dff['rolling'], label='Rolling Average')
 
         if 'pred_strength' in globals():
-            plt.hlines(y=float(pred_strength), xmin=0, xmax=concrete_dff['strain'].max(), label='Predicted Strength')
+            plt.hlines(y=float(pred_strength), xmin=0, xmax=concrete_dff['strain'].max(), label='Predicted Strength - %f psi' % float(pred_strength))
 
         plt.title(
                 'Stress vs. Strain of %s with Ultimate Strength %f kips' % (self.specimen_name, self.ultimate_strength))
@@ -113,8 +172,8 @@ class cob_specimen:
     def __init__(self, file_name, specimen_name, radius, inch_column, kips_column):
         self.file_name = file_name
         self.specimen_name = specimen_name
-        self.inch_column = inch_column-1
-        self.kips_column = kips_column-1
+        #self.inch_column = inch_column-1
+        #self.kips_column = kips_column-1
         self.radius = radius
 
 
@@ -124,6 +183,7 @@ class cob_specimen:
             such as Young's Modulus and Ultimate Strength '''
         area = (self.radius ** 2) * np.pi
         cob_df = pd.read_excel(self.file_name)  # opens CSV file
+
         cob_df.rename(columns={cob_df.columns[self.inch_column]: 'inch'}, inplace=True)
         cob_df.rename(columns={cob_df.columns[self.kips_column]: 'kips'}, inplace=True)
         cob_dft = cob_df[['kips', 'inch']]
@@ -217,69 +277,6 @@ class UTM_analysis:
         plt.savefig('%s plot.png' % self.specimen_name, dpi=500)
 
 
-class Predictive:
-    def __init__(self, cement, blast_furnace_slag, flyash, water, super, coarse_agg, fine_agg, age):
-        self.df_train = pd.read_csv('concrete_data.csv')
-        self.cement = cement
-        self.blast_furnace_slag = blast_furnace_slag
-        self.flyash = flyash
-        self.water = water
-        self.super = super
-        self.coarse_agg = coarse_agg
-        self.fine_agg = fine_agg
-        self.age = age
-        self.conversions()
-        self.predictor()
-
-
-    def conversions(self):
-        self.lb_per_kg = 1.68555
-        self.psi_per_mpa = 145.038
-        self.df_train['Cement'] = self.df_train['Cement']* self.lb_per_kg  # grams to lbs
-        self.df_train['Coarse Aggregate'] = self.df_train['Coarse Aggregate'] * self.lb_per_kg  # grams to lbs
-        self.df_train['Water'] = self.df_train['Water'] * self.lb_per_kg  # grams to lbs'
-        self.df_train['Cement'] = self.df_train['Cement'] * self.lb_per_kg  # grams to lbs'
-        self.df_train['Blast Furnace Slag'] = self.df_train['Blast Furnace Slag'] * self.lb_per_kg
-        self.df_train['Fine Aggregate'] = self.df_train['Fine Aggregate'] * self.lb_per_kg# grams to lbs'
-        self.df_train['Fly Ash'] = self.df_train['Fly Ash'] * self.lb_per_kg  # grams to lbs
-        self.df_train['Superplasticizer']  = self.df_train['Superplasticizer'] * self.lb_per_kg  # grams to lbs'
-        self.df_train['Strength'] = self.df_train['Strength'] * self.psi_per_mpa
-
-    def predictor(self):
-
-        self.X = self.df_train.drop("Strength", axis=1).values
-        self.y = self.df_train["Strength"]
-
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, random_state=1, test_size=0.2)
-
-        self.df_test = pd.DataFrame(self.X).iloc[0:0]
-        self.df_test.loc[-1] = [self.cement, self.blast_furnace_slag, self.flyash, self.water, self.super,
-                                               self.coarse_agg, self.fine_agg, self.age]
-
-        self.scaler = StandardScaler()
-
-        self.scaler.fit(self.X)
-        self.scaler.fit(self.df_test)
-
-        self.X = self.scaler.transform(self.X)
-        #self.y = self.scaler.transform(self.y)
-
-        params = {'objective': 'reg:squarederror',
-                  'max_depth': 6,
-                  'colsample_bylevel': 0.5,
-                  'learning_rate': 0.01,
-                  'random_state': 20}
-
-        self.model = XGBRegressor(learning_rate=0.05, n_estimators=250)
-
-        self.model.fit(self.X, self.y)
-
-        self.strength_predict = self.model.predict(self.df_test)
-
-        return self.strength_predict
-
-
-
 '''
 BEGIN GUI CODE
 '''
@@ -287,8 +284,9 @@ BEGIN GUI CODE
 
 #sg.theme('LightGrey') #sets theme of window
 sg.set_options(font=('Arial', 16))
+sg.theme('Reddit')
 
-material_choices = ['Concrete', 'Cob', 'Other']
+material_choices = ['Concrete', 'Cob', 'Other (Coming Soon)']
 
 
 setting_choices = [
@@ -301,15 +299,15 @@ setting_choices = [
 
 home_screen = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
-    [sg.Button(button_text="Specimen Analysis from Kips/Inch File", key='Kip/Inch')],
-    [sg.Button(button_text="Specimen Analysis from Stress/Strain File", key='Stress/Strain')],
-    [sg.Button(button_text='UTM Analysis', key='UTM')],
-    [sg.Button(button_text="Predict Performance from Ingredients", key='Predict')],
+    [sg.Button(button_text="Specimen Analysis from Kips/Inch File", key='Kip/Inch', expand_x=True)],
+    [sg.Button(button_text="Specimen Analysis from Stress/Strain File", key='Stress/Strain', expand_x=True)],
+    [sg.Button(button_text='UTM Analysis', key='UTM', expand_x=True)],
+    [sg.Button(button_text="Predict Performance from Ingredients", key='Predict', expand_x=True)],
 ]
 
 specimen_type_concrete = [
     #[sg.Text('Kips Column #'), sg.Input(key='-KIPS COLUMN-'), sg.Text('Inch Column #'), sg.Input(key='-INCH COLUMN-')],
-    [sg.Text('Specimen Name*        ', justification='left'), sg.Input(key='Specimen Name')],
+    [sg.Text('Specimen Name*        ', justification='left', expand_x=True), sg.Input(key='Specimen Name')],
     [sg.Text('Specimen Radius* (in) ', justification='left'), sg.Input(default_text='2', key='Rad')],
           ]
 
@@ -320,23 +318,22 @@ choices = [
 
 specimen_type_cob = [
     [sg.Combo(material_choices, expand_x=True, default_value=material_choices[0], key='-COMBO-'), sg.Button('Confirm', key='-CONFIRM-')],
-    [sg.Text('Specimen Name*     ', justification='left'), sg.Input(key='Specimen Name')],
-    [sg.Text('Radius* (in)              ', justification='left'), sg.Input(key='Cob Radius', default_text='3')],
-    [sg.Text('')]
+    [sg.Text('Specimen Name*     ', justification='left', expand_x=True), sg.Input(key='Specimen Name', expand_x=True)],
+    [sg.Text('Radius* (in)              ', justification='left', expand_x=True), sg.Input(key='Cob Radius', default_text='3', expand_x=True)]
 ]
 
 is_visible = False
 
 predictive_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
-    [sg.Text('Fine Aggregate (lb/yd^3)       ', justification='left'), sg.Input(key='Fine Agg')],
-    [sg.Text('Course Aggregate (lb/yd^3) ', justification='left'), sg.Input(key='Coarse Agg')],
-    [sg.Text('Cement (lb/yd^3)                 ', justification='left'), sg.Input(key='Cement')],
-    [sg.Text('Water (lb/yd^3)                     ', justification='left'), sg.Input(key='Water')],
-    [sg.Text('Fly Ash (lb/yd^3)                   ', justification='left'), sg.Input(default_text='0', key='Fly Ash')],
-    [sg.Text('Super Plasticizer (lb/yd^3)    ', justification='left'), sg.Input(default_text='0', key='Super')],
-    [sg.Text('Blast Furnace Slag (lb/yd^3) ', justification='left'), sg.Input(default_text='0', key='Blast Slag')],
-    [sg.Text('Curing Time (days)            ', justification='left'), sg.Input(default_text='28', key='Age')],
+    [sg.Text('Fine Aggregate (lb/yd^3)      ', justification='left', expand_x=True), sg.Input(key='Fine Agg')],
+    [sg.Text('Course Aggregate (lb/yd^3)    ', justification='left', expand_x=True), sg.Input(key='Coarse Agg')],
+    [sg.Text('Cement (lb/yd^3)      ', justification='left', expand_x=True), sg.Input(key='Cement')],
+    [sg.Text('Water (lb/yd^3)       ', justification='left', expand_x=True), sg.Input(key='Water')],
+    [sg.Text('Fly Ash (lb/yd^3)     ', justification='left', expand_x=True), sg.Input(default_text='0', key='Fly Ash')],
+    [sg.Text('Super Plasticizer (lb/yd^3)   ', justification='left', expand_x=True), sg.Input(default_text='0', key='Super')],
+    [sg.Text('Blast Furnace Slag (lb/yd^3)  ', justification='left', expand_x=True), sg.Input(default_text='0', key='Blast Slag')],
+    [sg.Text('Curing Time (days)    ', justification='left', expand_x=True), sg.Input(default_text='28', key='Age')],
     [sg.Button('Predict', key='Run Predictor')],
 ]
 
@@ -349,33 +346,35 @@ concrete_layout = [
     [specimen_type_concrete],
     [sg.Text('File Options', expand_x='true', justification='center', font=('Arial Bold', 16))],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True, ), sg.FileBrowse()],
-    [sg.Text('Kips Column #*         '), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
-    [sg.Text('Inch Column #*         '), sg.Input(key='-INCH COLUMN-', expand_x=True)],
-    [sg.Button('OK', key='-OK-')],
+    [sg.Text('Inch Column #*         ', expand_x=True), sg.Input(key='-INCH COLUMN-', expand_x=True)],
+    [sg.Text('Kips Column #*         ', expand_x=True), sg.Input(key='-KIPS COLUMN-', expand_x=True)],
+    [sg.Button('Analyze', key='-OK-')],
     ]
 
 stressstrain_specimen =  [
     [sg.Image(filename='mame logo.png', expand_x=True)],
-    [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
-    [sg.Text('Radius*'), sg.Input(key='Radius')],
-    [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Button('OK', key='-OK-')],
+    [sg.Text('Specimen Name*', expand_x=True), sg.Input(key='Specimen Name', default_text='New Mix')],
+    [sg.Text('Radius*', expand_x=True), sg.Input(key='Radius')],
+    [sg.Text('File Options', expand_x='true', justification='center', font=('Arial Bold', 16))],
+    [sg.Text('File Name*', expand_x=True), sg.Input(key='-FILEBROWSE-',expand_x=True), sg.FileBrowse()],
+    [sg.Button('Analyze', key='-OK-')],
 ]
 
 cob_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
     [specimen_type_cob],
+    [sg.Text('File Options', expand_x='true', justification='center', font=('Arial Bold', 16))],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Text('Kips Column #*             '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
-    [sg.Text('Inch Column #*             '), sg.Input(key='-INCH COLUMN-', expand_x=False)],
-    [sg.Button('OK', key='-OK-')],
+    [sg.Text('Inch Column #*       '), sg.Input(key='-INCH COLUMN-', expand_x=False)],
+    [sg.Text('Kips Column #*       '), sg.Input(key='-KIPS COLUMN-', expand_x=False)],
+    [sg.Button('Analyze', key='-OK-')],
     ]
 
 utm_layout = [
     [sg.Image(filename='mame logo.png', expand_x=True)],
     [sg.Text('Specimen Name*'), sg.Input(key='Specimen Name', default_text='New Mix')],
     [sg.Text('File Name*'), sg.Input(key='-FILEBROWSE-',font=('Arial Bold', 12),expand_x=True), sg.FileBrowse()],
-    [sg.Button('OK', key='-OK-')],
+    [sg.Button('Analyze', key='-OK-')],
 ]
 
 current_layout = home_screen
