@@ -7,7 +7,6 @@ import openpyxl
 from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
